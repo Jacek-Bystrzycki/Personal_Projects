@@ -1,0 +1,30 @@
+{
+  "name": "simatic_s7_control",
+  "version": "0.0.2",
+  "description": "Snap7 implementation using node.js wrapper",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mathiask88/node-snap7.git"
+  },
+  "scripts": {
+    "build": "npx tsc",
+    "start": "nodemon -x \"cls && node\" ./dist/index.js -q",
+    "dev": "nodemon -x \"cls && ts-node\" ./src/index.ts -q"
+  },
+  "author": "Jacek Bystrzycki",
+  "license": "ISC",
+  "dependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.0",
+    "@types/node-snap7": "^0.2.24",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "node-snap7": "^1.0.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
