@@ -1,19 +1,18 @@
-import { CreatePlcConnections } from './class/plc/s7/create-plc-connections';
-import plcDefinitions from './connections/plc/s7/conn-params';
+import { S7_CreatePlcConnections } from './class/plc/s7/create-plc-connections';
+import { s7_plcDefinitions, s7_plcReadMultiVar, s7_plcWriteMultiVar } from './connections/plc/s7/conn-params';
+import { s7_triggetTime } from './connections/plc/s7/conn-params';
 
-const plc = new CreatePlcConnections(plcDefinitions);
-const newData1: Buffer = Buffer.from([0xaa, 0xbb, 0xcc, 0xdd]);
-const newData2: Buffer = Buffer.from([0xff, 0xc9, 0x00, 0xaf, 0xc7, 0x2e]);
+const s7_plc = new S7_CreatePlcConnections(s7_plcDefinitions, s7_plcReadMultiVar, s7_plcWriteMultiVar);
 
-const start = (id: number, data: Buffer) => {
-  plc.connectToPlc(id);
+const s7_start = (id: number, dataToWrite: Buffer[]) => {
   setInterval(async () => {
-    plc.setWriteBuffer(id, data);
-    plc.writeData(id, 1, 0, data.byteLength);
-    const readData = await plc.readData(id, 1, 0, data.byteLength);
-    if (readData instanceof Buffer) console.log(readData);
-  }, 3000);
+    s7_plc.writeData(id, dataToWrite);
+    const s7_readData = await s7_plc.readData(id);
+    s7_readData.forEach((res) => console.log(res.Data));
+  }, s7_triggetTime);
 };
 
-start(1, newData1);
-start(2, newData2);
+const data1: Buffer[] = [Buffer.from([0x11, 0x22, 0x33, 0x44]), Buffer.from([0xaa, 0xbb, 0xcc, 0xdd])];
+const data2: Buffer[] = [Buffer.from([0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88]), Buffer.from([0xab, 0xcd, 0xef, 0x98, 0x76, 0x54])];
+s7_start(1, data1);
+s7_start(2, data2);

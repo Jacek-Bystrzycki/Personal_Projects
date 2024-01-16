@@ -1,80 +1,56 @@
 import snap7 = require('node-snap7');
-import { getDateAsString } from '../../../utils/get-date-as-string';
-import { DataPLC } from './data-plc';
+import { S7_DataPLC } from './data-plc';
+import { s7_triggetTime } from '../../../connections/plc/s7/conn-params';
 
-export class ConnectToPlc extends DataPLC {
+export class S7_ConnectToPlc extends S7_DataPLC {
   static countId: number = 0;
   private _id: number;
-  private _connected: boolean;
-  private _writeBuffer: Buffer;
-  constructor(
-    public readonly ip: string,
-    public readonly rack: number,
-    public readonly slot: number,
-    public readonly reconnectInt: number,
-    protected readonly s7client: snap7.S7Client
-  ) {
+  private _readBuffer: snap7.MultiVarRead[];
+  private _writeBuffer: snap7.MultiVarWrite[];
+  constructor(public readonly ip: string, public readonly rack: number, public readonly slot: number, protected readonly s7client: snap7.S7Client) {
     super(s7client);
-    this._id = ++ConnectToPlc.countId;
-    this._connected = false;
-    this._writeBuffer = Buffer.from([0]);
+    this._id = ++S7_ConnectToPlc.countId;
+    this._readBuffer = [];
+    this._writeBuffer = [];
   }
 
-  private connectPlc = async (): Promise<string> => {
-    return new Promise<string>((resolve, reject) => {
-      const isConnected: boolean = this.s7client.ConnectTo(this.ip, this.rack, this.slot);
-      if (isConnected) {
-        resolve(`${getDateAsString()}Connected to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
-      } else {
-        reject(`${getDateAsString()}Lost connection to PLC ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
-      }
-    });
-  };
-
-  private connectionCheck = async (): Promise<void> => {
-    return new Promise<void>((resolve, reject) => {
-      const data: unknown = this.s7client.PlcStatus();
-      if (typeof data === 'number' && (data === 4 || data === 8)) {
-        resolve();
-      } else {
-        reject();
-      }
-    });
-  };
-
-  public controlPlcConnection = (): void => {
-    let lostConn: boolean = true;
-    setInterval(async (): Promise<void> => {
-      try {
-        await this.connectionCheck();
-        this._connected = true;
-      } catch (error) {
-        try {
-          const isConnected = await this.connectPlc();
-          console.log(isConnected);
-          lostConn = true;
-        } catch (error) {
-          if (lostConn) console.log(error);
-          lostConn = false;
-          this._connected = false;
+  public connectPlc = async (): Promise<void> => {
+    const promise = new Promise<void>((resolve, reject) => {
+      this.s7client.Disconnect();
+      this.s7client.ConnectTo(this.ip, this.rack, this.slot, (err) => {
+        if (!err) {
+          resolve();
+        } else {
+          reject(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
         }
-      }
-    }, this.reconnectInt);
+      });
+    });
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        this.s7client.Disconnect();
+        reject(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
+      }, s7_triggetTime / 8);
+    });
+    return Promise.race([promise, timeout]);
   };
-
-  public get connected(): boolean {
-    return this._connected;
-  }
 
   public get id(): number {
     return this._id;
   }
 
-  public get writeBuffer(): Buffer {
+  public get readBuffer(): snap7.MultiVarRead[] {
+    return this._readBuffer;
+  }
+
+  public set readBuffer(data: snap7.MultiVarRead[]) {
+    this._readBuffer = data;
+  }
+
+  public get writeBuffer(): snap7.MultiVarWrite[] {
     return this._writeBuffer;
   }
 
-  public set writeBuffer(data: Buffer) {
+  public set writeBuffer(data: snap7.MultiVarWrite[]) {
     this._writeBuffer = data;
   }
 }

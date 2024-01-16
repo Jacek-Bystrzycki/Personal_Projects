@@ -9,70 +9,48 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ConnectToPlc = void 0;
-const get_date_as_string_1 = require("../../../utils/get-date-as-string");
+exports.S7_ConnectToPlc = void 0;
 const data_plc_1 = require("./data-plc");
-class ConnectToPlc extends data_plc_1.DataPLC {
-    constructor(ip, rack, slot, reconnectInt, s7client) {
+const conn_params_1 = require("../../../connections/plc/s7/conn-params");
+class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
+    constructor(ip, rack, slot, s7client) {
         super(s7client);
         this.ip = ip;
         this.rack = rack;
         this.slot = slot;
-        this.reconnectInt = reconnectInt;
         this.s7client = s7client;
         this.connectPlc = () => __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                const isConnected = this.s7client.ConnectTo(this.ip, this.rack, this.slot);
-                if (isConnected) {
-                    resolve(`${(0, get_date_as_string_1.getDateAsString)()}Connected to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
-                }
-                else {
-                    reject(`${(0, get_date_as_string_1.getDateAsString)()}Lost connection to PLC ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
-                }
-            });
-        });
-        this.connectionCheck = () => __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                const data = this.s7client.PlcStatus();
-                if (typeof data === 'number' && (data === 4 || data === 8)) {
-                    resolve();
-                }
-                else {
-                    reject();
-                }
-            });
-        });
-        this.controlPlcConnection = () => {
-            let lostConn = true;
-            setInterval(() => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    yield this.connectionCheck();
-                    this._connected = true;
-                }
-                catch (error) {
-                    try {
-                        const isConnected = yield this.connectPlc();
-                        console.log(isConnected);
-                        lostConn = true;
+            const promise = new Promise((resolve, reject) => {
+                this.s7client.Disconnect();
+                this.s7client.ConnectTo(this.ip, this.rack, this.slot, (err) => {
+                    if (!err) {
+                        resolve();
                     }
-                    catch (error) {
-                        if (lostConn)
-                            console.log(error);
-                        lostConn = false;
-                        this._connected = false;
+                    else {
+                        reject(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
                     }
-                }
-            }), this.reconnectInt);
-        };
-        this._id = ++ConnectToPlc.countId;
-        this._connected = false;
-        this._writeBuffer = Buffer.from([0]);
-    }
-    get connected() {
-        return this._connected;
+                });
+            });
+            const timeout = new Promise((_, reject) => {
+                setTimeout(() => {
+                    this.s7client.Disconnect();
+                    reject(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
+                }, conn_params_1.s7_triggetTime / 8);
+            });
+            return Promise.race([promise, timeout]);
+        });
+        this._id = ++S7_ConnectToPlc.countId;
+        this._readBuffer = [];
+        this._writeBuffer = [];
     }
     get id() {
         return this._id;
+    }
+    get readBuffer() {
+        return this._readBuffer;
+    }
+    set readBuffer(data) {
+        this._readBuffer = data;
     }
     get writeBuffer() {
         return this._writeBuffer;
@@ -81,5 +59,5 @@ class ConnectToPlc extends data_plc_1.DataPLC {
         this._writeBuffer = data;
     }
 }
-exports.ConnectToPlc = ConnectToPlc;
-ConnectToPlc.countId = 0;
+exports.S7_ConnectToPlc = S7_ConnectToPlc;
+S7_ConnectToPlc.countId = 0;

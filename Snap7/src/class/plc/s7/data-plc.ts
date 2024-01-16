@@ -1,22 +1,13 @@
 import snap7 = require('node-snap7');
-import { readDB, writeDB } from '../../../utils/plc/s7/read-write-db';
+import { readAreas, writeAreas } from '../../../utils/plc/s7/read-write-db';
 
-export class DataPLC {
+export class S7_DataPLC {
   constructor(protected readonly s7client: snap7.S7Client) {}
 
-  public readFromPlc = async (db: number, start: number, len: number): Promise<Buffer | void> => {
-    try {
-      return await readDB(this.s7client, db, start, len);
-    } catch (error) {
-      console.log(error);
-    }
+  public readFromPlc = async (multiVar: snap7.MultiVarRead[]): Promise<snap7.MultiVarsReadResult[]> => {
+    return readAreas(this.s7client, multiVar);
   };
-
-  public writeToPlc = async (db: number, start: number, len: number, buffer: Buffer): Promise<void> => {
-    try {
-      await writeDB(this.s7client, db, start, len, buffer);
-    } catch (error) {
-      console.log(error);
-    }
+  public writeToPlc = async (multiVar: snap7.MultiVarWrite[]): Promise<void> => {
+    return writeAreas(this.s7client, multiVar);
   };
 }

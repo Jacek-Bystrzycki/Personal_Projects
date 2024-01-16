@@ -9,27 +9,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DataPLC = void 0;
+exports.S7_DataPLC = void 0;
 const read_write_db_1 = require("../../../utils/plc/s7/read-write-db");
-class DataPLC {
+class S7_DataPLC {
     constructor(s7client) {
         this.s7client = s7client;
-        this.readFromPlc = (db, start, len) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                return yield (0, read_write_db_1.readDB)(this.s7client, db, start, len);
-            }
-            catch (error) {
-                console.log(error);
-            }
+        this.readFromPlc = (multiVar) => __awaiter(this, void 0, void 0, function* () {
+            return (0, read_write_db_1.readAreas)(this.s7client, multiVar);
         });
-        this.writeToPlc = (db, start, len, buffer) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield (0, read_write_db_1.writeDB)(this.s7client, db, start, len, buffer);
-            }
-            catch (error) {
-                console.log(error);
-            }
+        this.writeToPlc = (multiVar) => __awaiter(this, void 0, void 0, function* () {
+            return (0, read_write_db_1.writeAreas)(this.s7client, multiVar);
         });
     }
 }
-exports.DataPLC = DataPLC;
+exports.S7_DataPLC = S7_DataPLC;

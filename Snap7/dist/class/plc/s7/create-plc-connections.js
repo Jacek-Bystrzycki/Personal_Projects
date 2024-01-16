@@ -9,71 +9,79 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreatePlcConnections = void 0;
+exports.S7_CreatePlcConnections = void 0;
 const connect_to_plc_1 = require("./connect-to-plc");
-class CreatePlcConnections {
-    constructor(plcDefinitions) {
+const get_date_as_string_1 = require("../../../utils/get-date-as-string");
+class S7_CreatePlcConnections {
+    constructor(plcDefinitions, readMultiVar, writeMultiVar) {
         this.plcDefinitions = plcDefinitions;
+        this.readMultiVar = readMultiVar;
+        this.writeMultiVar = writeMultiVar;
         this.createConnctions = () => {
             const plcInstances = this.plcDefinitions.map((plc) => {
-                return new connect_to_plc_1.ConnectToPlc(...plc);
+                return new connect_to_plc_1.S7_ConnectToPlc(...plc);
             });
             return plcInstances.map((instance) => {
                 return { id: instance.id, instance };
             });
         };
-        this.connectToPlc = (id) => {
-            const instanceToConnect = this._instances.find((instance) => {
-                return instance.id === id;
-            });
-            if (instanceToConnect)
-                instanceToConnect.instance.controlPlcConnection();
-        };
-        this.connectionStatus = (id) => {
-            const instanceToStatus = this._instances.find((instance) => {
-                return instance.id === id;
-            });
-            if (instanceToStatus)
-                return instanceToStatus.instance.connected;
-            return false;
-        };
-        this.readData = (id, db, start, len) => __awaiter(this, void 0, void 0, function* () {
+        this.readData = (id) => __awaiter(this, void 0, void 0, function* () {
             const instanceToRead = this._instances.find((instance) => {
                 return instance.id === id;
             });
-            if (this.connectionStatus(id)) {
-                if (!instanceToRead)
-                    return console.log(`Instance ${id} not exists`);
-                return yield instanceToRead.instance.readFromPlc(db, start, len);
+            if (!instanceToRead) {
+                console.log(`Instance ${id} not exists`);
+                return [];
             }
-            else
-                console.log(`Cannot read while unconnected to PLC: ${id}`);
+            const multiVar = this.readMultiVar[id - 1];
+            instanceToRead.instance.readBuffer = multiVar;
+            try {
+                yield instanceToRead.instance.connectPlc();
+                return yield instanceToRead.instance.readFromPlc(instanceToRead.instance.readBuffer);
+            }
+            catch (error) {
+                console.log(`${(0, get_date_as_string_1.getDateAsString)()}Cannot read from PLC id: ${id}: ${error}`);
+                return [];
+            }
         });
-        this.writeData = (id, db, start, len) => __awaiter(this, void 0, void 0, function* () {
+        // public writeData = async (id: number, writeMultiVar: snap7.MultiVarWrite[][]): Promise<void> => {
+        //   const instanceToWrite = this._instances.find((instance) => {
+        //     return instance.id === id;
+        //   });
+        //   if (!instanceToWrite) return console.log(`Instance ${id} not exists`);
+        //   const multiVar: snap7.MultiVarWrite[] = writeMultiVar[id - 1];
+        //   instanceToWrite.instance.writeBuffer = multiVar;
+        //   try {
+        //     await instanceToWrite.instance.connectPlc();
+        //     await instanceToWrite.instance.writeToPlc(instanceToWrite.instance.writeBuffer);
+        //   } catch (error) {
+        //     console.log(`${getDateAsString()}Cannot write to PLC id: ${id}: ${error}`);
+        //   }
+        // };
+        this.writeData = (id, dataToWrite) => __awaiter(this, void 0, void 0, function* () {
             const instanceToWrite = this._instances.find((instance) => {
                 return instance.id === id;
             });
-            if (this.connectionStatus(id)) {
-                if (!instanceToWrite)
-                    return console.log(`Instance ${id} not exists`);
-                const data = instanceToWrite.instance.writeBuffer;
-                yield instanceToWrite.instance.writeToPlc(db, start, len, data);
-            }
-            else
-                console.log(`Cannot write while unconnected to PLC: ${id}`);
-        });
-        this.setWriteBuffer = (id, data) => {
-            const instanceToSetBuffer = this._instances.find((instance) => {
-                return instance.id === id;
-            });
-            if (!instanceToSetBuffer)
+            if (!instanceToWrite)
                 return console.log(`Instance ${id} not exists`);
-            instanceToSetBuffer.instance.writeBuffer = data;
-        };
+            let multiVar = this.writeMultiVar[id - 1];
+            multiVar = multiVar.map((item, index) => {
+                item = Object.assign(Object.assign({}, item), { Data: dataToWrite[index] });
+                return item;
+            });
+            instanceToWrite.instance.writeBuffer = multiVar;
+            try {
+                yield instanceToWrite.instance.connectPlc();
+                yield instanceToWrite.instance.writeToPlc(instanceToWrite.instance.writeBuffer);
+            }
+            catch (error) {
+                console.log(`${(0, get_date_as_string_1.getDateAsString)()}Cannot write to PLC id: ${id}: ${error}`);
+            }
+        });
         this._instances = this.createConnctions();
     }
     get instances() {
         return this._instances;
     }
 }
-exports.CreatePlcConnections = CreatePlcConnections;
+exports.S7_CreatePlcConnections = S7_CreatePlcConnections;

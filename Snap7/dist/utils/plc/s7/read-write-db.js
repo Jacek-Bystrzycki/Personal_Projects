@@ -1,28 +1,38 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.writeDB = exports.readDB = void 0;
-const get_date_as_string_1 = require("../../get-date-as-string");
-const readDB = (s7client, db, start, len) => {
-    return new Promise((resolve, reject) => {
-        const data = s7client.DBRead(db, start, len);
-        if (data instanceof Buffer) {
-            resolve(data);
-        }
-        else {
-            reject(`${(0, get_date_as_string_1.getDateAsString)()}Error while reading P#DB${db}.DBX${start}.0 BYTE ${len}`);
-        }
+exports.writeAreas = exports.readAreas = void 0;
+const conn_params_1 = require("../../../connections/plc/s7/conn-params");
+const readAreas = (s7client, multiVar) => {
+    const promise = new Promise((resolve, reject) => {
+        s7client.ReadMultiVars(multiVar, (err, data) => {
+            if (!err && data.every((result) => result.Result === 0))
+                resolve(data);
+            reject('Error during reading from PLC');
+        });
     });
-};
-exports.readDB = readDB;
-const writeDB = (s7client, db, start, len, buffer) => {
-    return new Promise((resolve, reject) => {
-        const writeOK = s7client.DBWrite(db, start, len, buffer);
-        if (writeOK) {
-            resolve();
-        }
-        else {
-            reject(`${(0, get_date_as_string_1.getDateAsString)()}Error while writing P#DB${db}.DBX${start}.0 BYTE ${len}`);
-        }
+    const timeout = new Promise((_, reject) => {
+        setTimeout(() => {
+            s7client.Disconnect();
+            reject('Error during reading from PLC');
+        }, conn_params_1.s7_triggetTime / 4);
     });
+    return Promise.race([promise, timeout]);
 };
-exports.writeDB = writeDB;
+exports.readAreas = readAreas;
+const writeAreas = (s7client, multiVar) => {
+    const promise = new Promise((resolve, reject) => {
+        s7client.WriteMultiVars(multiVar, (err, data) => {
+            if (!err && data.every((result) => result.Result === 0))
+                resolve();
+            reject('Error during writing to PLC');
+        });
+    });
+    const timeout = new Promise((_, reject) => {
+        setTimeout(() => {
+            s7client.Disconnect();
+            reject('Error during writing to PLC');
+        }, conn_params_1.s7_triggetTime / 4);
+    });
+    return Promise.race([promise, timeout]);
+};
+exports.writeAreas = writeAreas;

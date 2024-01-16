@@ -1,6 +1,6 @@
-import { ConnectToPlc } from '../../../class/plc/s7/connect-to-plc';
+import { S7_ConnectToPlc } from '../../../class/plc/s7/connect-to-plc';
 
-export type PLCInstance = {
+export type S7_PLCInstance = {
   id: number;
-  instance: ConnectToPlc;
+  instance: S7_ConnectToPlc;
 };
