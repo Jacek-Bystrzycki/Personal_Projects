@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.S7_CreatePlcConnections = void 0;
 const connect_to_plc_1 = require("./connect-to-plc");
-const get_date_as_string_1 = require("../../../utils/get-date-as-string");
 class S7_CreatePlcConnections {
     constructor(plcDefinitions, readMultiVar, writeMultiVar) {
         this.plcDefinitions = plcDefinitions;
@@ -25,58 +24,36 @@ class S7_CreatePlcConnections {
                 return { id: instance.id, instance };
             });
         };
-        this.readData = (id) => __awaiter(this, void 0, void 0, function* () {
+        this.readData = (id, indexes) => __awaiter(this, void 0, void 0, function* () {
             const instanceToRead = this._instances.find((instance) => {
                 return instance.id === id;
             });
             if (!instanceToRead) {
-                console.log(`Instance ${id} not exists`);
-                return [];
+                throw new Error(`Instance ${id} not exists`);
             }
             const multiVar = this.readMultiVar[id - 1];
-            instanceToRead.instance.readBuffer = multiVar;
-            try {
-                yield instanceToRead.instance.connectPlc();
-                return yield instanceToRead.instance.readFromPlc(instanceToRead.instance.readBuffer);
-            }
-            catch (error) {
-                console.log(`${(0, get_date_as_string_1.getDateAsString)()}Cannot read from PLC id: ${id}: ${error}`);
-                return [];
-            }
+            if (!indexes.every((index) => typeof multiVar[index - 1] !== 'undefined'))
+                throw new Error(`Not all indexes [${indexes}] exist in params definitions`);
+            instanceToRead.instance.readBuffer = indexes.map((index) => multiVar[index - 1]);
+            yield instanceToRead.instance.connectPlc();
+            return instanceToRead.instance.readFromPlc(instanceToRead.instance.readBuffer);
         });
-        // public writeData = async (id: number, writeMultiVar: snap7.MultiVarWrite[][]): Promise<void> => {
-        //   const instanceToWrite = this._instances.find((instance) => {
-        //     return instance.id === id;
-        //   });
-        //   if (!instanceToWrite) return console.log(`Instance ${id} not exists`);
-        //   const multiVar: snap7.MultiVarWrite[] = writeMultiVar[id - 1];
-        //   instanceToWrite.instance.writeBuffer = multiVar;
-        //   try {
-        //     await instanceToWrite.instance.connectPlc();
-        //     await instanceToWrite.instance.writeToPlc(instanceToWrite.instance.writeBuffer);
-        //   } catch (error) {
-        //     console.log(`${getDateAsString()}Cannot write to PLC id: ${id}: ${error}`);
-        //   }
-        // };
-        this.writeData = (id, dataToWrite) => __awaiter(this, void 0, void 0, function* () {
+        this.writeData = (id, indexes, dataToWrite) => __awaiter(this, void 0, void 0, function* () {
             const instanceToWrite = this._instances.find((instance) => {
                 return instance.id === id;
             });
             if (!instanceToWrite)
-                return console.log(`Instance ${id} not exists`);
+                throw new Error(`Instance ${id} not exists`);
+            if (indexes.length !== dataToWrite.length)
+                throw new Error(`Data to write not match indexes`);
             let multiVar = this.writeMultiVar[id - 1];
-            multiVar = multiVar.map((item, index) => {
-                item = Object.assign(Object.assign({}, item), { Data: dataToWrite[index] });
-                return item;
+            if (!indexes.every((index) => typeof multiVar[index - 1] !== 'undefined'))
+                throw new Error(`Not all indexes [${indexes}] exist in params definitions`);
+            instanceToWrite.instance.writeBuffer = indexes.map((index) => {
+                return Object.assign(Object.assign({}, multiVar[index - 1]), { Data: dataToWrite[index - 1] });
             });
-            instanceToWrite.instance.writeBuffer = multiVar;
-            try {
-                yield instanceToWrite.instance.connectPlc();
-                yield instanceToWrite.instance.writeToPlc(instanceToWrite.instance.writeBuffer);
-            }
-            catch (error) {
-                console.log(`${(0, get_date_as_string_1.getDateAsString)()}Cannot write to PLC id: ${id}: ${error}`);
-            }
+            yield instanceToWrite.instance.connectPlc();
+            return instanceToWrite.instance.writeToPlc(instanceToWrite.instance.writeBuffer);
         });
         this._instances = this.createConnctions();
     }

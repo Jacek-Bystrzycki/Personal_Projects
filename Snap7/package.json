@@ -10,7 +10,8 @@
   "scripts": {
     "build": "npx tsc",
     "start": "nodemon -x \"cls && node\" ./dist/index.js -q",
-    "dev": "nodemon -x \"cls && ts-node\" ./src/index.ts -q"
+    "dev": "nodemon -x \"cls && ts-node\" ./src/index.ts -q",
+    "prod": "node ./dist/index.js"
   },
   "author": "Jacek Bystrzycki",
   "license": "ISC",
