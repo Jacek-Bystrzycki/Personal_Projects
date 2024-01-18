@@ -10,10 +10,10 @@ export class S7_CreatePlcConnections {
     private readonly readMultiVar: snap7.MultiVarRead[][],
     private writeMultiVar: snap7.MultiVarWrite[][]
   ) {
-    this._instances = this.createConnctions();
+    this._instances = this.s7_createConnctions();
   }
 
-  private createConnctions = (): S7_PLCInstance[] => {
+  private s7_createConnctions = (): S7_PLCInstance[] => {
     const plcInstances: S7_ConnectToPlc[] = this.plcDefinitions.map((plc) => {
       return new S7_ConnectToPlc(...plc);
     });
@@ -22,8 +22,8 @@ export class S7_CreatePlcConnections {
     });
   };
 
-  public readData = async (id: number, indexes: number[]): Promise<snap7.MultiVarsReadResult[]> => {
-    const instanceToRead = this._instances.find((instance) => {
+  public s7_readData = async (id: number, indexes: number[]): Promise<snap7.MultiVarsReadResult[]> => {
+    const instanceToRead: S7_PLCInstance | undefined = this._instances.find((instance) => {
       return instance.id === id;
     });
     if (!instanceToRead) {
@@ -32,12 +32,12 @@ export class S7_CreatePlcConnections {
     const multiVar: snap7.MultiVarRead[] = this.readMultiVar[id - 1];
     if (!indexes.every((index) => typeof multiVar[index - 1] !== 'undefined')) throw new Error(`Not all indexes [${indexes}] exist in params definitions`);
     instanceToRead.instance.readBuffer = indexes.map((index) => multiVar[index - 1]);
-    await instanceToRead.instance.connectPlc();
-    return instanceToRead.instance.readFromPlc(instanceToRead.instance.readBuffer);
+    await instanceToRead.instance.s7_connectPlc();
+    return instanceToRead.instance.s7_readFromPlc(instanceToRead.instance.readBuffer);
   };
 
-  public writeData = async (id: number, indexes: number[], dataToWrite: Buffer[]): Promise<void> => {
-    const instanceToWrite = this._instances.find((instance) => {
+  public s7_writeData = async (id: number, indexes: number[], dataToWrite: Buffer[]): Promise<void> => {
+    const instanceToWrite: S7_PLCInstance | undefined = this._instances.find((instance) => {
       return instance.id === id;
     });
     if (!instanceToWrite) throw new Error(`Instance ${id} not exists`);
@@ -47,8 +47,8 @@ export class S7_CreatePlcConnections {
     instanceToWrite.instance.writeBuffer = indexes.map((index) => {
       return { ...multiVar[index - 1], Data: dataToWrite[index - 1] };
     });
-    await instanceToWrite.instance.connectPlc();
-    return instanceToWrite.instance.writeToPlc(instanceToWrite.instance.writeBuffer);
+    await instanceToWrite.instance.s7_connectPlc();
+    return instanceToWrite.instance.s7_writeToPlc(instanceToWrite.instance.writeBuffer);
   };
 
   public get instances(): S7_PLCInstance[] {

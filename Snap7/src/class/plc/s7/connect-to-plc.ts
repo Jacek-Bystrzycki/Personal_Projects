@@ -7,14 +7,14 @@ export class S7_ConnectToPlc extends S7_DataPLC {
   private _id: number;
   private _readBuffer: snap7.MultiVarRead[];
   private _writeBuffer: snap7.MultiVarWrite[];
-  constructor(public readonly ip: string, public readonly rack: number, public readonly slot: number, protected readonly s7client: snap7.S7Client) {
-    super(s7client);
+  constructor(public readonly ip: string, public readonly rack: number, public readonly slot: number) {
+    super();
     this._id = ++S7_ConnectToPlc.countId;
     this._readBuffer = [];
     this._writeBuffer = [];
   }
 
-  public connectPlc = async (): Promise<void> => {
+  public s7_connectPlc = async (): Promise<void> => {
     const promise = new Promise<void>((resolve, reject) => {
       this.s7client.Disconnect();
       this.s7client.ConnectTo(this.ip, this.rack, this.slot, (err) => {
@@ -29,7 +29,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
       setTimeout(() => {
         this.s7client.Disconnect();
         reject(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
-      }, s7_triggetTime / 8);
+      }, s7_triggetTime / 6);
     });
     return Promise.race([promise, timeout]);
   };

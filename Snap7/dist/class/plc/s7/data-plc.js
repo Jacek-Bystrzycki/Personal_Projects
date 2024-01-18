@@ -10,16 +10,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.S7_DataPLC = void 0;
+const snap7 = require("node-snap7");
 const read_write_db_1 = require("../../../utils/plc/s7/read-write-db");
 class S7_DataPLC {
-    constructor(s7client) {
-        this.s7client = s7client;
-        this.readFromPlc = (multiVar) => __awaiter(this, void 0, void 0, function* () {
-            return (0, read_write_db_1.readAreas)(this.s7client, multiVar);
+    constructor() {
+        this.s7_readFromPlc = (multiVar) => __awaiter(this, void 0, void 0, function* () {
+            return (0, read_write_db_1.s7_readAreas)(this.s7client, multiVar);
         });
-        this.writeToPlc = (multiVar) => __awaiter(this, void 0, void 0, function* () {
-            return (0, read_write_db_1.writeAreas)(this.s7client, multiVar);
+        this.s7_writeToPlc = (multiVar) => __awaiter(this, void 0, void 0, function* () {
+            return (0, read_write_db_1.s7_writeAreas)(this.s7client, multiVar);
         });
+        this.s7client = new snap7.S7Client();
     }
 }
 exports.S7_DataPLC = S7_DataPLC;

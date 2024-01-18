@@ -13,13 +13,12 @@ exports.S7_ConnectToPlc = void 0;
 const data_plc_1 = require("./data-plc");
 const conn_params_1 = require("../../../connections/plc/s7/conn-params");
 class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
-    constructor(ip, rack, slot, s7client) {
-        super(s7client);
+    constructor(ip, rack, slot) {
+        super();
         this.ip = ip;
         this.rack = rack;
         this.slot = slot;
-        this.s7client = s7client;
-        this.connectPlc = () => __awaiter(this, void 0, void 0, function* () {
+        this.s7_connectPlc = () => __awaiter(this, void 0, void 0, function* () {
             const promise = new Promise((resolve, reject) => {
                 this.s7client.Disconnect();
                 this.s7client.ConnectTo(this.ip, this.rack, this.slot, (err) => {
@@ -35,7 +34,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                 setTimeout(() => {
                     this.s7client.Disconnect();
                     reject(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
-                }, conn_params_1.s7_triggetTime / 8);
+                }, conn_params_1.s7_triggetTime / 6);
             });
             return Promise.race([promise, timeout]);
         });

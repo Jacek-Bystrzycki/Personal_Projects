@@ -11,7 +11,8 @@
     "build": "npx tsc",
     "start": "nodemon -x \"cls && node\" ./dist/index.js -q",
     "dev": "nodemon -x \"cls && ts-node\" ./src/index.ts -q",
-    "prod": "node ./dist/index.js"
+    "prod": "node ./dist/index.js",
+    "dev-mb": "nodemon -x \"cls && ts-node\" ./src/utils/plc/mb/read-write-registers.ts -q"
   },
   "author": "Jacek Bystrzycki",
   "license": "ISC",
@@ -20,6 +21,7 @@
     "@types/node": "^20.11.0",
     "@types/node-snap7": "^0.2.24",
     "express": "^4.18.2",
+    "jsmodbus": "^4.0.10",
     "morgan": "^1.10.0",
     "node-snap7": "^1.0.7"
   },

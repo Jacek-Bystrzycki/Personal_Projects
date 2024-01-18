@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.s7_plcWriteMultiVar = exports.s7_plcReadMultiVar = exports.s7_plcDefinitions = exports.s7_triggetTime = void 0;
-const snap7 = require("node-snap7");
-exports.s7_triggetTime = 3000;
+exports.s7_triggetTime = 3137;
 //== PLC 1 =====================
-const plc1 = ['172.16.0.10', 0, 1, new snap7.S7Client()];
+const plc1 = ['172.16.0.10', 0, 1];
 const plc1ReadMultiVar = [
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
@@ -40,7 +39,7 @@ const plc1WriteMultiVar = [
     },
 ];
 //== PLC 2 =====================
-const plc2 = ['172.16.0.11', 0, 1, new snap7.S7Client()];
+const plc2 = ['172.16.0.11', 0, 1];
 const plc2ReadMultiVar = [
     {
         Area: 132 /* snap7.Area.S7AreaDB */,

@@ -1,10 +1,10 @@
 import snap7 = require('node-snap7');
 import { S7_ConnectionParamType } from '../../../types/plc/s7/conn-param';
 
-export const s7_triggetTime: number = 3000;
+export const s7_triggetTime: number = 3137;
 
 //== PLC 1 =====================
-const plc1: S7_ConnectionParamType = ['172.16.0.10', 0, 1, new snap7.S7Client()];
+const plc1: S7_ConnectionParamType = ['172.16.0.10', 0, 1];
 const plc1ReadMultiVar: snap7.MultiVarRead[] = [
   {
     Area: snap7.Area.S7AreaDB,
@@ -41,7 +41,7 @@ const plc1WriteMultiVar: snap7.MultiVarWrite[] = [
 ];
 
 //== PLC 2 =====================
-const plc2: S7_ConnectionParamType = ['172.16.0.11', 0, 1, new snap7.S7Client()];
+const plc2: S7_ConnectionParamType = ['172.16.0.11', 0, 1];
 const plc2ReadMultiVar: snap7.MultiVarRead[] = [
   {
     Area: snap7.Area.S7AreaDB,

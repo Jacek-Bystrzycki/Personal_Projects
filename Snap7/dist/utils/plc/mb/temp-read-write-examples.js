@@ -9,34 +9,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.s7_write = exports.s7_read = void 0;
+exports.mb_write = exports.mb_read = void 0;
 const __1 = require("../../..");
-const conn_params_1 = require("../../../connections/plc/s7/conn-params");
 const get_date_as_string_1 = require("../../get-date-as-string");
-//In standard application use s7_plc.readData() and s7_plc.writeData() in express controllers instead to trigger it in setInterval!!!
-const s7_read = (id, indexes) => {
+//In standard application use mb_ReadFromDevice() and mb_WriteToDevice() in express controllers instead to trigger it in setInterval!!!
+const mb_read = (id, regs) => {
     setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const s7_readData = yield __1.s7_plc.s7_readData(id, indexes);
-            s7_readData.forEach((res, index) => {
-                const data = [...res.Data];
-                console.log(`${(0, get_date_as_string_1.getDateAsString)()}S7-Read - id ${id}, index ${indexes[index]}: [${data}]`);
-            });
+            const data = yield __1.mb_devices.mb_ReadFromDevice(id, regs);
+            console.log(`${(0, get_date_as_string_1.getDateAsString)()}MB-Read - id ${id}, registers ${regs[0]}-${regs[0] + regs[1]}: [${data}]`);
         }
         catch (error) {
-            console.log(`${(0, get_date_as_string_1.getDateAsString)()}S7-Read - Cannot read from PLC id: ${id}: ${error}`);
+            console.log(`${(0, get_date_as_string_1.getDateAsString)()}MB-Read - id ${id}, registers ${regs[0]}-${regs[0] + regs[1]}: ${error}`);
         }
-    }), conn_params_1.s7_triggetTime);
+    }), 2317);
 };
-exports.s7_read = s7_read;
-const s7_write = (id, indexes, dataToWrite) => {
+exports.mb_read = mb_read;
+const mb_write = (id, start, data) => {
     setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            yield __1.s7_plc.s7_writeData(id, indexes, dataToWrite);
+            yield __1.mb_devices.mb_WriteToDevice(id, start, data);
         }
         catch (error) {
-            console.log(`${(0, get_date_as_string_1.getDateAsString)()}S7-Write - Cannot write to PLC id: ${id}: ${error}`);
+            console.log(`${(0, get_date_as_string_1.getDateAsString)()}MB-Write - id ${id}, registers ${start}-${start + data.length}: ${error}`);
         }
-    }), conn_params_1.s7_triggetTime * 4.72);
+    }), 4723);
 };
-exports.s7_write = s7_write;
+exports.mb_write = mb_write;

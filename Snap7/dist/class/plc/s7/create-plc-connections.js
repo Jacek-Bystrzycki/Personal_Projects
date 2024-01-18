@@ -16,7 +16,7 @@ class S7_CreatePlcConnections {
         this.plcDefinitions = plcDefinitions;
         this.readMultiVar = readMultiVar;
         this.writeMultiVar = writeMultiVar;
-        this.createConnctions = () => {
+        this.s7_createConnctions = () => {
             const plcInstances = this.plcDefinitions.map((plc) => {
                 return new connect_to_plc_1.S7_ConnectToPlc(...plc);
             });
@@ -24,7 +24,7 @@ class S7_CreatePlcConnections {
                 return { id: instance.id, instance };
             });
         };
-        this.readData = (id, indexes) => __awaiter(this, void 0, void 0, function* () {
+        this.s7_readData = (id, indexes) => __awaiter(this, void 0, void 0, function* () {
             const instanceToRead = this._instances.find((instance) => {
                 return instance.id === id;
             });
@@ -35,10 +35,10 @@ class S7_CreatePlcConnections {
             if (!indexes.every((index) => typeof multiVar[index - 1] !== 'undefined'))
                 throw new Error(`Not all indexes [${indexes}] exist in params definitions`);
             instanceToRead.instance.readBuffer = indexes.map((index) => multiVar[index - 1]);
-            yield instanceToRead.instance.connectPlc();
-            return instanceToRead.instance.readFromPlc(instanceToRead.instance.readBuffer);
+            yield instanceToRead.instance.s7_connectPlc();
+            return instanceToRead.instance.s7_readFromPlc(instanceToRead.instance.readBuffer);
         });
-        this.writeData = (id, indexes, dataToWrite) => __awaiter(this, void 0, void 0, function* () {
+        this.s7_writeData = (id, indexes, dataToWrite) => __awaiter(this, void 0, void 0, function* () {
             const instanceToWrite = this._instances.find((instance) => {
                 return instance.id === id;
             });
@@ -52,10 +52,10 @@ class S7_CreatePlcConnections {
             instanceToWrite.instance.writeBuffer = indexes.map((index) => {
                 return Object.assign(Object.assign({}, multiVar[index - 1]), { Data: dataToWrite[index - 1] });
             });
-            yield instanceToWrite.instance.connectPlc();
-            return instanceToWrite.instance.writeToPlc(instanceToWrite.instance.writeBuffer);
+            yield instanceToWrite.instance.s7_connectPlc();
+            return instanceToWrite.instance.s7_writeToPlc(instanceToWrite.instance.writeBuffer);
         });
-        this._instances = this.createConnctions();
+        this._instances = this.s7_createConnctions();
     }
     get instances() {
         return this._instances;
