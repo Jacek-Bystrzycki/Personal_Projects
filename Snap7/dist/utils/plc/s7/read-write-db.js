@@ -11,18 +11,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.s7_writeAreas = exports.s7_readAreas = void 0;
 const conn_params_1 = require("../../../connections/plc/s7/conn-params");
+const errors_1 = require("../../../types/server/errors");
+const get_object_prop_1 = require("../../get-object-prop");
 const s7_readAreas = (s7client, multiVar) => __awaiter(void 0, void 0, void 0, function* () {
     const promise = new Promise((resolve, reject) => {
         s7client.ReadMultiVars(multiVar, (err, data) => {
             if (!err && data.every((result) => result.Result === 0))
                 resolve(data);
-            reject('Error during reading from PLC');
+            const errorDataDBValues = JSON.stringify((0, get_object_prop_1.getObjectValue)(multiVar, 'DBNumber'));
+            reject(new errors_1.InternalError(`Cannot read data from DBs:${errorDataDBValues}`));
         });
     });
     const timeout = new Promise((_, reject) => {
         setTimeout(() => {
             s7client.Disconnect();
-            reject('Error during reading from PLC');
+            reject(new errors_1.InternalError(`Timeout during reading data from PLC`));
         }, conn_params_1.s7_triggetTime / 4);
     });
     return Promise.race([promise, timeout]);
@@ -33,13 +36,14 @@ const s7_writeAreas = (s7client, multiVar) => __awaiter(void 0, void 0, void 0, 
         s7client.WriteMultiVars(multiVar, (err, data) => {
             if (!err && data.every((result) => result.Result === 0))
                 resolve();
-            reject('Error during writing to PLC');
+            const errorDataDBValues = JSON.stringify((0, get_object_prop_1.getObjectValue)(multiVar, 'DBNumber'));
+            reject(new errors_1.InternalError(`Cannot write data to DBs:${errorDataDBValues}`));
         });
     });
     const timeout = new Promise((_, reject) => {
         setTimeout(() => {
             s7client.Disconnect();
-            reject('Error during writing to PLC');
+            reject(new errors_1.InternalError(`Timeout during writing data from PLC`));
         }, conn_params_1.s7_triggetTime / 4);
     });
     return Promise.race([promise, timeout]);

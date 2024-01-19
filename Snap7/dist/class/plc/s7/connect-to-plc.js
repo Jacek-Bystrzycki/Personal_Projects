@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.S7_ConnectToPlc = void 0;
 const data_plc_1 = require("./data-plc");
 const conn_params_1 = require("../../../connections/plc/s7/conn-params");
+const errors_1 = require("../../../types/server/errors");
 class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
     constructor(ip, rack, slot) {
         super();
@@ -26,14 +27,14 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                         resolve();
                     }
                     else {
-                        reject(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
+                        reject(new errors_1.InternalError(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`));
                     }
                 });
             });
             const timeout = new Promise((_, reject) => {
                 setTimeout(() => {
                     this.s7client.Disconnect();
-                    reject(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
+                    reject(new errors_1.InternalError(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`));
                 }, conn_params_1.s7_triggetTime / 6);
             });
             return Promise.race([promise, timeout]);

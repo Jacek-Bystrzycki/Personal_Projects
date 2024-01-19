@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MB_CreateConnections = void 0;
 const connect_to_devide_1 = require("./connect-to-devide");
+const errors_1 = require("../../../types/server/errors");
 class MB_CreateConnections {
     constructor(deviceDefinitions) {
         this.deviceDefinitions = deviceDefinitions;
@@ -27,7 +28,7 @@ class MB_CreateConnections {
                 return item.id === id;
             });
             if (!instanceToRead)
-                throw new Error(`Instance ${id} not exists`);
+                throw new errors_1.BadRequestError(`Instance ${id} not exists`);
             return instanceToRead.instance.mb_ReadRegisters(regs);
         });
         this.mb_WriteToDevice = (id, start, data) => __awaiter(this, void 0, void 0, function* () {
@@ -35,7 +36,7 @@ class MB_CreateConnections {
                 return item.id === id;
             });
             if (!instanceToWrite)
-                throw new Error(`Instance ${id} not exists`);
+                throw new errors_1.BadRequestError(`Instance ${id} not exists`);
             return instanceToWrite.instance.mb_WriteRegisters(start, data);
         });
         this._instances = this.createConnections();

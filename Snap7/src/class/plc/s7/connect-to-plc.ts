@@ -1,6 +1,7 @@
 import snap7 = require('node-snap7');
 import { S7_DataPLC } from './data-plc';
 import { s7_triggetTime } from '../../../connections/plc/s7/conn-params';
+import { InternalError } from '../../../types/server/errors';
 
 export class S7_ConnectToPlc extends S7_DataPLC {
   static countId: number = 0;
@@ -21,14 +22,14 @@ export class S7_ConnectToPlc extends S7_DataPLC {
         if (!err) {
           resolve();
         } else {
-          reject(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
+          reject(new InternalError(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`));
         }
       });
     });
     const timeout = new Promise<never>((_, reject) => {
       setTimeout(() => {
         this.s7client.Disconnect();
-        reject(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`);
+        reject(new InternalError(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`));
       }, s7_triggetTime / 6);
     });
     return Promise.race([promise, timeout]);

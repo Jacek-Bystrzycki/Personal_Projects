@@ -1,6 +1,7 @@
 import { Socket, SocketConnectOpts } from 'net';
 import Modbus = require('jsmodbus');
 import { MB_Registers } from '../../../types/plc/mb/conn-params';
+import { InternalError } from '../../../types/server/errors';
 
 export class MB_ConnectToDevice {
   static countId: number = 0;
@@ -44,11 +45,11 @@ export class MB_ConnectToDevice {
         })
         .catch((err) => {
           const error = this.mb_handleErrors(err);
-          reject(error);
+          reject(new InternalError(`${error}`));
         });
     });
     const timeout = new Promise<never>((_, reject) => {
-      setTimeout(() => reject('Read registers timeout'), 1000);
+      setTimeout(() => reject(new InternalError('Read registers timeout')), 1000);
     });
 
     return Promise.race([promise, timeout]);
@@ -63,11 +64,11 @@ export class MB_ConnectToDevice {
         })
         .catch((err) => {
           const error = this.mb_handleErrors(err);
-          reject(error);
+          reject(new InternalError(`${error}`));
         });
     });
     const timeout = new Promise<never>((_, reject) => {
-      setTimeout(() => reject('Write registers timeout'), 1000);
+      setTimeout(() => reject(new InternalError('Write registers timeout')), 1000);
     });
     return Promise.race([promise, timeout]);
   };

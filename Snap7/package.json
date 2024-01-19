@@ -1,11 +1,11 @@
 {
-  "name": "simatic_s7_control",
-  "version": "0.0.2",
-  "description": "Snap7 implementation using node.js wrapper",
+  "name": "s7-and-modbus-control",
+  "version": "0.0.3",
+  "description": "Handling data with S7-driver and Modbus-TCP",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/mathiask88/node-snap7.git"
+    "url": "https://github.com/Jacek-Bystrzycki/Personal_Projects/tree/main/Snap7"
   },
   "scripts": {
     "build": "npx tsc",
@@ -17,10 +17,15 @@
   "author": "Jacek Bystrzycki",
   "license": "ISC",
   "dependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/morgan": "^1.9.9",
     "@types/node": "^20.11.0",
     "@types/node-snap7": "^0.2.24",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "http-status-codes": "^2.3.0",
     "jsmodbus": "^4.0.10",
     "morgan": "^1.10.0",
     "node-snap7": "^1.0.7"

@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MB_ConnectToDevice = void 0;
 const net_1 = require("net");
 const Modbus = require("jsmodbus");
+const errors_1 = require("../../../types/server/errors");
 class MB_ConnectToDevice {
     constructor(options) {
         this.options = options;
@@ -43,11 +44,11 @@ class MB_ConnectToDevice {
                 })
                     .catch((err) => {
                     const error = this.mb_handleErrors(err);
-                    reject(error);
+                    reject(new errors_1.InternalError(`${error}`));
                 });
             });
             const timeout = new Promise((_, reject) => {
-                setTimeout(() => reject('Read registers timeout'), 1000);
+                setTimeout(() => reject(new errors_1.InternalError('Read registers timeout')), 1000);
             });
             return Promise.race([promise, timeout]);
         });
@@ -60,11 +61,11 @@ class MB_ConnectToDevice {
                 })
                     .catch((err) => {
                     const error = this.mb_handleErrors(err);
-                    reject(error);
+                    reject(new errors_1.InternalError(`${error}`));
                 });
             });
             const timeout = new Promise((_, reject) => {
-                setTimeout(() => reject('Write registers timeout'), 1000);
+                setTimeout(() => reject(new errors_1.InternalError('Write registers timeout')), 1000);
             });
             return Promise.race([promise, timeout]);
         });

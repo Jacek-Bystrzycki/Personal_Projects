@@ -9,9 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.S7_CreatePlcConnections = void 0;
+exports.S7_CreateConnections = void 0;
 const connect_to_plc_1 = require("./connect-to-plc");
-class S7_CreatePlcConnections {
+const errors_1 = require("../../../types/server/errors");
+class S7_CreateConnections {
     constructor(plcDefinitions, readMultiVar, writeMultiVar) {
         this.plcDefinitions = plcDefinitions;
         this.readMultiVar = readMultiVar;
@@ -29,11 +30,11 @@ class S7_CreatePlcConnections {
                 return instance.id === id;
             });
             if (!instanceToRead) {
-                throw new Error(`Instance ${id} not exists`);
+                throw new errors_1.BadRequestError(`Instance ${id} not exists`);
             }
             const multiVar = this.readMultiVar[id - 1];
             if (!indexes.every((index) => typeof multiVar[index - 1] !== 'undefined'))
-                throw new Error(`Not all indexes [${indexes}] exist in params definitions`);
+                throw new errors_1.BadRequestError(`Not all indexes [${indexes}] exist in params definitions`);
             instanceToRead.instance.readBuffer = indexes.map((index) => multiVar[index - 1]);
             yield instanceToRead.instance.s7_connectPlc();
             return instanceToRead.instance.s7_readFromPlc(instanceToRead.instance.readBuffer);
@@ -43,12 +44,12 @@ class S7_CreatePlcConnections {
                 return instance.id === id;
             });
             if (!instanceToWrite)
-                throw new Error(`Instance ${id} not exists`);
+                throw new errors_1.BadRequestError(`Instance ${id} not exists`);
             if (indexes.length !== dataToWrite.length)
-                throw new Error(`Data to write not match indexes`);
+                throw new errors_1.BadRequestError(`Data to write not match indexes`);
             let multiVar = this.writeMultiVar[id - 1];
             if (!indexes.every((index) => typeof multiVar[index - 1] !== 'undefined'))
-                throw new Error(`Not all indexes [${indexes}] exist in params definitions`);
+                throw new errors_1.BadRequestError(`Not all indexes [${indexes}] exist in params definitions`);
             instanceToWrite.instance.writeBuffer = indexes.map((index) => {
                 return Object.assign(Object.assign({}, multiVar[index - 1]), { Data: dataToWrite[index - 1] });
             });
@@ -61,4 +62,4 @@ class S7_CreatePlcConnections {
         return this._instances;
     }
 }
-exports.S7_CreatePlcConnections = S7_CreatePlcConnections;
+exports.S7_CreateConnections = S7_CreateConnections;

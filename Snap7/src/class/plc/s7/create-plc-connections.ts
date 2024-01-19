@@ -2,8 +2,9 @@ import { S7_ConnectToPlc } from './connect-to-plc';
 import snap7 = require('node-snap7');
 import { S7_PLCInstance } from '../../../types/plc/s7/plc-instance';
 import { S7_ConnectionParamType } from '../../../types/plc/s7/conn-param';
+import { BadRequestError } from '../../../types/server/errors';
 
-export class S7_CreatePlcConnections {
+export class S7_CreateConnections {
   private _instances: S7_PLCInstance[];
   constructor(
     private readonly plcDefinitions: S7_ConnectionParamType[],
@@ -27,10 +28,11 @@ export class S7_CreatePlcConnections {
       return instance.id === id;
     });
     if (!instanceToRead) {
-      throw new Error(`Instance ${id} not exists`);
+      throw new BadRequestError(`Instance ${id} not exists`);
     }
     const multiVar: snap7.MultiVarRead[] = this.readMultiVar[id - 1];
-    if (!indexes.every((index) => typeof multiVar[index - 1] !== 'undefined')) throw new Error(`Not all indexes [${indexes}] exist in params definitions`);
+    if (!indexes.every((index) => typeof multiVar[index - 1] !== 'undefined'))
+      throw new BadRequestError(`Not all indexes [${indexes}] exist in params definitions`);
     instanceToRead.instance.readBuffer = indexes.map((index) => multiVar[index - 1]);
     await instanceToRead.instance.s7_connectPlc();
     return instanceToRead.instance.s7_readFromPlc(instanceToRead.instance.readBuffer);
@@ -40,10 +42,11 @@ export class S7_CreatePlcConnections {
     const instanceToWrite: S7_PLCInstance | undefined = this._instances.find((instance) => {
       return instance.id === id;
     });
-    if (!instanceToWrite) throw new Error(`Instance ${id} not exists`);
-    if (indexes.length !== dataToWrite.length) throw new Error(`Data to write not match indexes`);
+    if (!instanceToWrite) throw new BadRequestError(`Instance ${id} not exists`);
+    if (indexes.length !== dataToWrite.length) throw new BadRequestError(`Data to write not match indexes`);
     let multiVar: snap7.MultiVarWrite[] = this.writeMultiVar[id - 1];
-    if (!indexes.every((index) => typeof multiVar[index - 1] !== 'undefined')) throw new Error(`Not all indexes [${indexes}] exist in params definitions`);
+    if (!indexes.every((index) => typeof multiVar[index - 1] !== 'undefined'))
+      throw new BadRequestError(`Not all indexes [${indexes}] exist in params definitions`);
     instanceToWrite.instance.writeBuffer = indexes.map((index) => {
       return { ...multiVar[index - 1], Data: dataToWrite[index - 1] };
     });
