@@ -3,12 +3,14 @@ import { s7_plcDefinitions, s7_plcReadMultiVar, s7_plcWriteMultiVar } from './co
 import { MB_CreateConnections } from './class/plc/mb/create-mb-connection';
 import { mb_deviceDefinitions } from './connections/plc/mb/conn-params';
 import { CustomServer } from './class/server/custom-server';
+import { port } from './connections/server/conn-params';
 
 //========== S7-driver handling ===============
-export const s7_plc = new S7_CreateConnections(s7_plcDefinitions, s7_plcReadMultiVar, s7_plcWriteMultiVar);
+export const s7_plc_1 = new S7_CreateConnections(s7_plcDefinitions, s7_plcReadMultiVar, s7_plcWriteMultiVar);
 
 //========== Modbus TCP handling ===============
-export const mb_devices = new MB_CreateConnections(mb_deviceDefinitions);
+export const mb_devices_1 = new MB_CreateConnections(mb_deviceDefinitions);
 
-//========== Express REST server  ===============
-const server = CustomServer.server;
+//========== Express REST servers  ===============
+const serverForModbus = new CustomServer(port, { mb_definitions: mb_devices_1 });
+const serverForS7 = new CustomServer(port + 1, { s7_definitions: s7_plc_1 });

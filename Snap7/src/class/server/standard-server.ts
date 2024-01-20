@@ -1,11 +1,26 @@
 import express, { Express } from 'express';
 import cors, { CorsOptions } from 'cors';
-import { ServerType } from '../../types/server/server-types';
+import { ServerDevices, ServerType } from '../../types/server/server-types';
 import { getDateAsString } from '../../utils/get-date-as-string';
-import morgan from 'morgan';
+import { Request, Response, NextFunction } from 'express';
+import morgan = require('morgan');
+import { IncomingMessage } from 'http';
+
+declare global {
+  namespace Express {
+    interface Request {
+      port: string;
+    }
+  }
+}
+
+interface RequestForMorgan extends IncomingMessage {
+  port: string;
+}
 
 export class StandardServer implements ServerType {
   public readonly app: Express;
+  public devices: ServerDevices = {};
   constructor(protected readonly port: number) {
     this.app = express();
   }
@@ -16,7 +31,15 @@ export class StandardServer implements ServerType {
     };
     this.app.use(cors(corsOptions));
     this.app.use(express.json());
-    this.app.use(morgan('tiny'));
+    this.app.use((req: Request, res: Response, next: NextFunction) => {
+      req.port = this.port.toString();
+      next();
+    });
+    morgan.token('port', (req: RequestForMorgan) => {
+      return req.port;
+    });
+
+    this.app.use(morgan('Port :port :method :url Status :status - :response-time ms'));
   };
 
   protected startServer = () => {
