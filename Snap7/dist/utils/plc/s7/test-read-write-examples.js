@@ -16,7 +16,7 @@ const get_date_as_string_1 = require("../../get-date-as-string");
 const s7_read = (id, indexes) => {
     setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const s7_readData = yield __1.s7_plc.s7_readData(id, indexes);
+            const s7_readData = yield __1.s7_plc_1.s7_readData(id, indexes);
             s7_readData.forEach((res, index) => {
                 const data = [...res.Data];
                 console.log(`${(0, get_date_as_string_1.getDateAsString)()}S7-Read - id ${id}, index ${indexes[index]}: [${data}]`);
@@ -30,7 +30,7 @@ const s7_read = (id, indexes) => {
 const s7_write = (id, indexes, dataToWrite) => {
     setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            yield __1.s7_plc.s7_writeData(id, indexes, dataToWrite);
+            yield __1.s7_plc_1.s7_writeData(id, indexes, dataToWrite);
         }
         catch (error) {
             console.log(`${(0, get_date_as_string_1.getDateAsString)()}S7-Write - Cannot write to PLC id: ${id}: ${error}`);

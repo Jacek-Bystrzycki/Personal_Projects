@@ -89,7 +89,6 @@ class MB_ConnectToDevice {
                 return `Unknown Error, ${err}`;
             }
         };
-        this._id = ++MB_ConnectToDevice.countId;
         this._socket = new net_1.Socket();
         this._client = new Modbus.client.TCP(this._socket);
         this.reconnect();
@@ -97,9 +96,5 @@ class MB_ConnectToDevice {
     get readBuffer() {
         return this._readBuffer;
     }
-    get id() {
-        return this._id;
-    }
 }
 exports.MB_ConnectToDevice = MB_ConnectToDevice;
-MB_ConnectToDevice.countId = 0;

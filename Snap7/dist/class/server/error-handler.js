@@ -4,7 +4,7 @@ exports.ErrorHandler = exports.notFound = void 0;
 const errors_1 = require("../../types/server/errors");
 const get_date_as_string_1 = require("../../utils/get-date-as-string");
 const notFound = (req, res, next) => {
-    next(new errors_1.NotFoundError('Resource not found'));
+    next(new errors_1.NotFoundError(`Resource not found on Server: ${req.port}`));
 };
 exports.notFound = notFound;
 class ErrorHandler {

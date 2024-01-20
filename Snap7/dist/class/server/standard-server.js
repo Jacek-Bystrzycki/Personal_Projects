@@ -7,17 +7,25 @@ exports.StandardServer = void 0;
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const get_date_as_string_1 = require("../../utils/get-date-as-string");
-const morgan_1 = __importDefault(require("morgan"));
+const morgan = require("morgan");
 class StandardServer {
     constructor(port) {
         this.port = port;
+        this.devices = {};
         this.configServer = () => {
             const corsOptions = {
                 origin: `http://localhost:${this.port}`,
             };
             this.app.use((0, cors_1.default)(corsOptions));
             this.app.use(express_1.default.json());
-            this.app.use((0, morgan_1.default)('tiny'));
+            this.app.use((req, res, next) => {
+                req.port = this.port.toString();
+                next();
+            });
+            morgan.token('port', (req) => {
+                return req.port;
+            });
+            this.app.use(morgan('Port :port :method :url Status :status - :response-time ms'));
         };
         this.startServer = () => {
             this.app

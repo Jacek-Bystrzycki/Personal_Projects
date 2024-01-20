@@ -39,12 +39,8 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
             });
             return Promise.race([promise, timeout]);
         });
-        this._id = ++S7_ConnectToPlc.countId;
         this._readBuffer = [];
         this._writeBuffer = [];
-    }
-    get id() {
-        return this._id;
     }
     get readBuffer() {
         return this._readBuffer;
@@ -60,4 +56,3 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
     }
 }
 exports.S7_ConnectToPlc = S7_ConnectToPlc;
-S7_ConnectToPlc.countId = 0;

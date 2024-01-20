@@ -19,8 +19,8 @@ class MB_CreateConnections {
             const instances = this.deviceDefinitions.map((item) => {
                 return new connect_to_devide_1.MB_ConnectToDevice(...item);
             });
-            return instances.map((instance) => {
-                return { id: instance.id, instance };
+            return instances.map((instance, index) => {
+                return { id: index + 1, instance };
             });
         };
         this.mb_ReadFromDevice = (id, regs) => __awaiter(this, void 0, void 0, function* () {

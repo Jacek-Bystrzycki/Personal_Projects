@@ -1,4 +1,4 @@
-import { mb_devices } from '../../..';
+import { mb_devices_1 } from '../../..';
 import { MB_Registers } from '../../../types/plc/mb/conn-params';
 import { getDateAsString } from '../../get-date-as-string';
 
@@ -6,7 +6,7 @@ import { getDateAsString } from '../../get-date-as-string';
 const mb_read = (id: number, regs: MB_Registers): void => {
   setInterval(async () => {
     try {
-      const data = await mb_devices.mb_ReadFromDevice(id, regs);
+      const data = await mb_devices_1.mb_ReadFromDevice(id, regs);
       console.log(`${getDateAsString()}MB-Read - id ${id}, registers ${regs[0]}-${regs[0] + regs[1]}: [${data}]`);
     } catch (error) {
       console.log(`${getDateAsString()}MB-Read - id ${id}, registers ${regs[0]}-${regs[0] + regs[1]}: ${error}`);
@@ -17,7 +17,7 @@ const mb_read = (id: number, regs: MB_Registers): void => {
 const mb_write = (id: number, start: number, data: number[]): void => {
   setInterval(async () => {
     try {
-      await mb_devices.mb_WriteToDevice(id, start, data);
+      await mb_devices_1.mb_WriteToDevice(id, start, data);
     } catch (error) {
       console.log(`${getDateAsString()}MB-Write - id ${id}, registers ${start}-${start + data.length}: ${error}`);
     }

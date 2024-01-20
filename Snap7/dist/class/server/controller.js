@@ -10,13 +10,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MB_Controller = exports.S7_Controller = void 0;
-const __1 = require("../..");
 const http_status_codes_1 = require("http-status-codes");
 const get_date_as_string_1 = require("../../utils/get-date-as-string");
 const errors_1 = require("../../types/server/errors");
 class S7_Controller {
-    constructor() {
+    constructor(instance) {
+        this.instance = instance;
         this.read = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const { id } = req.params;
             const { indexes } = req.query;
             try {
@@ -24,9 +25,11 @@ class S7_Controller {
                     throw new errors_1.BadRequestError('Wrong indexes');
                 {
                     const numId = parseInt(id, 10);
-                    const resp = yield __1.s7_plc.s7_readData(numId, JSON.parse(indexes));
-                    const data = resp.map((item) => [...item.Data]);
-                    res.status(http_status_codes_1.StatusCodes.OK).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data });
+                    const resp = yield ((_a = this.instance.devices.s7_definitions) === null || _a === void 0 ? void 0 : _a.s7_readData(numId, JSON.parse(indexes)));
+                    if (resp) {
+                        const data = resp.map((item) => [...item.Data]);
+                        res.status(http_status_codes_1.StatusCodes.OK).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data });
+                    }
                 }
             }
             catch (error) {
@@ -34,6 +37,7 @@ class S7_Controller {
             }
         });
         this.write = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            var _b;
             const { id } = req.params;
             const { indexes } = req.query;
             const { data } = req.body;
@@ -45,7 +49,7 @@ class S7_Controller {
                 {
                     const numId = parseInt(id, 10);
                     const buffers = data.map((buffer) => Buffer.from(buffer));
-                    yield __1.s7_plc.s7_writeData(numId, JSON.parse(indexes), buffers);
+                    yield ((_b = this.instance.devices.s7_definitions) === null || _b === void 0 ? void 0 : _b.s7_writeData(numId, JSON.parse(indexes), buffers));
                     res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Created` });
                 }
             }
@@ -57,15 +61,17 @@ class S7_Controller {
 }
 exports.S7_Controller = S7_Controller;
 class MB_Controller {
-    constructor() {
+    constructor(instance) {
+        this.instance = instance;
         this.read = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const { id } = req.params;
             const { registers } = req.query;
             try {
                 if (typeof registers !== 'string')
                     throw new errors_1.BadRequestError('Wrong registers');
                 const numId = parseInt(id, 10);
-                const data = yield __1.mb_devices.mb_ReadFromDevice(numId, JSON.parse(registers));
+                const data = yield ((_a = this.instance.devices.mb_definitions) === null || _a === void 0 ? void 0 : _a.mb_ReadFromDevice(numId, JSON.parse(registers)));
                 res.status(http_status_codes_1.StatusCodes.OK).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data });
             }
             catch (error) {
@@ -73,6 +79,7 @@ class MB_Controller {
             }
         });
         this.write = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            var _b;
             const { id } = req.params;
             const { start } = req.query;
             const { data } = req.body;
@@ -83,7 +90,7 @@ class MB_Controller {
                     throw new errors_1.BadRequestError('Wrong data payload');
                 const numId = parseInt(id, 10);
                 const numStart = parseInt(start, 10);
-                yield __1.mb_devices.mb_WriteToDevice(numId, numStart, data);
+                yield ((_b = this.instance.devices.mb_definitions) === null || _b === void 0 ? void 0 : _b.mb_WriteToDevice(numId, numStart, data));
                 res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Created` });
             }
             catch (error) {
