@@ -4,14 +4,11 @@ import { MB_Registers } from '../../../types/plc/mb/conn-params';
 import { InternalError } from '../../../types/server/errors';
 
 export class MB_ConnectToDevice {
-  static countId: number = 0;
-  private _id: number;
   private _socket: Socket;
   private _client: Modbus.ModbusTCPClient;
   private _readBuffer: number[] = [];
   private _isConnected: boolean = false;
   constructor(private readonly options: SocketConnectOpts) {
-    this._id = ++MB_ConnectToDevice.countId;
     this._socket = new Socket();
     this._client = new Modbus.client.TCP(this._socket);
     this.reconnect();
@@ -94,8 +91,5 @@ export class MB_ConnectToDevice {
 
   public get readBuffer(): number[] {
     return this._readBuffer;
-  }
-  public get id(): number {
-    return this._id;
   }
 }

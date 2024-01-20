@@ -13,8 +13,8 @@ export class MB_CreateConnections {
     const instances = this.deviceDefinitions.map((item) => {
       return new MB_ConnectToDevice(...item);
     });
-    return instances.map((instance) => {
-      return { id: instance.id, instance };
+    return instances.map((instance, index) => {
+      return { id: index + 1, instance };
     });
   };
 

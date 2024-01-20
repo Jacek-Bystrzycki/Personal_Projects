@@ -4,13 +4,10 @@ import { s7_triggetTime } from '../../../connections/plc/s7/conn-params';
 import { InternalError } from '../../../types/server/errors';
 
 export class S7_ConnectToPlc extends S7_DataPLC {
-  static countId: number = 0;
-  private _id: number;
   private _readBuffer: snap7.MultiVarRead[];
   private _writeBuffer: snap7.MultiVarWrite[];
   constructor(public readonly ip: string, public readonly rack: number, public readonly slot: number) {
     super();
-    this._id = ++S7_ConnectToPlc.countId;
     this._readBuffer = [];
     this._writeBuffer = [];
   }
@@ -34,10 +31,6 @@ export class S7_ConnectToPlc extends S7_DataPLC {
     });
     return Promise.race([promise, timeout]);
   };
-
-  public get id(): number {
-    return this._id;
-  }
 
   public get readBuffer(): snap7.MultiVarRead[] {
     return this._readBuffer;
