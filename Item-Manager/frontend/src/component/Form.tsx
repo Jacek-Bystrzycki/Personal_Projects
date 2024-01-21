@@ -4,10 +4,14 @@ import { useGroceryContext } from '../hook/useGroceryContext';
 import { UseGroceryReducer } from '../context/GroceryContext';
 import { setupBorder } from '../styledComponents/Utils';
 import { BasicButton } from '../styledComponents/Buttons';
+import { useQueryHooks } from '../hook/useQueryHooks';
 
 const Form = () => {
-  const { addToDB, clearDB, state }: UseGroceryReducer = useGroceryContext();
+  const { state }: UseGroceryReducer = useGroceryContext();
   const [value, setValue] = useState<string>('');
+  const { useAddItemQuery, useClearItemsQuery } = useQueryHooks();
+  const { addItem } = useAddItemQuery();
+  const { clearItems } = useClearItemsQuery();
 
   const handleOnChange = (ev: ChangeEvent<HTMLInputElement>): void => {
     setValue(ev.target.value);
@@ -16,13 +20,13 @@ const Form = () => {
   const handleSubmit = (ev: FormEvent<HTMLFormElement>): void => {
     ev.preventDefault();
     if (value) {
-      addToDB(value);
+      addItem(value);
       setValue('');
     }
   };
 
   const handleOnClick = (): void => {
-    clearDB();
+    clearItems();
   };
 
   const title: ReactElement = (

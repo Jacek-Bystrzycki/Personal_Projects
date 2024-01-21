@@ -9,12 +9,15 @@ import { EditItemType } from './context/EditItemContext';
 import Edit from './component/Edit';
 import { GlobalStyles } from './styledComponents/GlobalStyles';
 import { Wrapper } from './styledComponents/Wrapper';
+import { useQueryHooks } from './hook/useQueryHooks';
 
 const App = (): ReactElement => {
   const { state, loadFromDB }: UseGroceryReducer = useGroceryContext();
   const {
     edit: { item, isEdit },
   }: EditItemType = useEditContext();
+  const { useFetchItemsQuery } = useQueryHooks();
+  const { data } = useFetchItemsQuery();
 
   const pageContent: ReactElement = (
     <>
@@ -34,8 +37,8 @@ const App = (): ReactElement => {
   );
 
   useEffect(() => {
-    loadFromDB();
-  }, []);
+    if (data) loadFromDB(data);
+  }, [data]);
 
   return (
     <>

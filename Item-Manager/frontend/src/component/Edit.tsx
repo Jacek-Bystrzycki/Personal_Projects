@@ -1,10 +1,10 @@
 import { ChangeEvent, FormEvent, ReactElement, useState } from 'react';
-import { useGroceryContext } from '../hook/useGroceryContext';
-import { UseGroceryReducer, InitState } from '../context/GroceryContext';
+import { InitState } from '../context/GroceryContext';
 import { EditItemType } from '../context/EditItemContext';
 import { useEditContext } from '../hook/useEditItemContext';
 import styled from 'styled-components';
 import { BasicButton } from '../styledComponents/Buttons';
+import { useQueryHooks } from '../hook/useQueryHooks';
 
 type PropType = {
   item: InitState;
@@ -16,7 +16,8 @@ type EditType = {
 };
 
 const Edit = ({ item }: PropType): ReactElement => {
-  const { updateDB }: UseGroceryReducer = useGroceryContext();
+  const { useUpdateItemQuery } = useQueryHooks();
+  const { updateItem } = useUpdateItemQuery();
   const { applyItem }: EditItemType = useEditContext();
   const [editData, setEditData] = useState<EditType>({ title: item.title, checked: item.checked });
 
@@ -34,7 +35,7 @@ const Edit = ({ item }: PropType): ReactElement => {
     ev.preventDefault();
     if (editData.title) {
       const newItem: InitState = { _id: item._id, title: editData.title, checked: editData.checked };
-      updateDB(newItem);
+      updateItem(newItem);
       applyItem();
     }
   };

@@ -1,24 +1,26 @@
 import { ReactElement } from 'react';
-import { useGroceryContext } from '../hook/useGroceryContext';
-import { InitState, UseGroceryReducer } from '../context/GroceryContext';
+import { InitState } from '../context/GroceryContext';
 import styled from 'styled-components';
 import { useEditContext } from '../hook/useEditItemContext';
 import { EditItemType } from '../context/EditItemContext';
 import iconDelete from '../images/trash-xmark.svg';
 import iconEdit from '../images/file-edit.svg';
+import { useQueryHooks } from '../hook/useQueryHooks';
 
 type PropsType = {
   item: InitState;
 };
 
 export const SingleItem = ({ item }: PropsType): ReactElement => {
-  const { updateDB, removeFromDB }: UseGroceryReducer = useGroceryContext();
+  const { useUpdateItemQuery, useRemoveItemQuery } = useQueryHooks();
+  const { updateItem } = useUpdateItemQuery();
+  const { removeItem } = useRemoveItemQuery();
 
   const { editItem }: EditItemType = useEditContext();
 
   const onChangeHandler = (): void => {
     const newItem: InitState = { ...item, checked: !item.checked };
-    updateDB(newItem);
+    updateItem(newItem);
   };
 
   const input: ReactElement = <input className="checkbox" type="checkbox" checked={item.checked} onChange={onChangeHandler} />;
@@ -36,7 +38,7 @@ export const SingleItem = ({ item }: PropsType): ReactElement => {
       className="btn"
       type="button"
       onClick={() => {
-        removeFromDB(item._id!);
+        removeItem(item._id!);
       }}
     >
       <img src={iconDelete} alt="delete" />
