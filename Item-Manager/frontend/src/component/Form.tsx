@@ -1,17 +1,15 @@
 import { ReactElement, useState, ChangeEvent, FormEvent } from 'react';
 import styled from 'styled-components';
-import { useGroceryContext } from '../hook/useGroceryContext';
-import { UseGroceryReducer } from '../context/GroceryContext';
 import { setupBorder } from '../styledComponents/Utils';
 import { BasicButton } from '../styledComponents/Buttons';
 import { useQueryHooks } from '../hook/useQueryHooks';
 
 const Form = () => {
-  const { state }: UseGroceryReducer = useGroceryContext();
   const [value, setValue] = useState<string>('');
-  const { useAddItemQuery, useClearItemsQuery } = useQueryHooks();
+  const { useAddItemQuery, useClearItemsQuery, useFetchItemsQuery } = useQueryHooks();
   const { addItem } = useAddItemQuery();
   const { clearItems } = useClearItemsQuery();
+  const { data } = useFetchItemsQuery();
 
   const handleOnChange = (ev: ChangeEvent<HTMLInputElement>): void => {
     setValue(ev.target.value);
@@ -42,7 +40,7 @@ const Form = () => {
       <input className="form-input" value={value} onChange={handleOnChange} />
       <div className="btn-container">
         <BasicButton type="submit">add</BasicButton>
-        {state.length > 0 && clearButton}
+        {data?.data.length > 0 && clearButton}
       </div>
     </form>
   );

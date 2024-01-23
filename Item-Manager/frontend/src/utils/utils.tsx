@@ -1,4 +1,4 @@
-import type { InitState, ReducerPayloadCheckType } from '../context/GroceryContext';
+import type { InitState } from '../context/GroceryContext';
 
 const localKey: string = 'GROCERY';
 
@@ -13,12 +13,6 @@ export const loadFromLocal = (): InitState[] => {
     return [];
   }
 };
-
-export function isRequiredType(payload: unknown): payload is ReducerPayloadCheckType {
-  if (payload !== null && typeof payload === 'object') {
-    return '_id' in payload && 'checked' in payload;
-  } else return false;
-}
 
 export const isInitStateType = (item: unknown): item is InitState => {
   if (item !== null && typeof item === 'object') {
