@@ -5,37 +5,51 @@ export const s7_triggetTime: number = 3137;
 
 //===========DEFINITIONS FOR SERVER 1: ==================
 //== PLC 1 =====================
-const plc1_1: S7_ConnectionParamType = ['172.16.0.10', 0, 1];
+const plc1_1: S7_ConnectionParamType = ['10.0.0.10', 0, 1];
 const plc1_1_ReadMultiVar: snap7.MultiVarRead[] = [
   {
     Area: snap7.Area.S7AreaDB,
-    WordLen: snap7.WordLen.S7WLByte,
-    DBNumber: 1,
-    Start: 0,
-    Amount: 4,
+    WordLen: snap7.WordLen.S7WLReal,
+    DBNumber: 102,
+    Start: 212,
+    Amount: 2,
+  },
+  {
+    Area: snap7.Area.S7AreaDB,
+    WordLen: snap7.WordLen.S7WLWord,
+    DBNumber: 102,
+    Start: 6,
+    Amount: 2,
+  },
+  {
+    Area: snap7.Area.S7AreaDB,
+    WordLen: snap7.WordLen.S7WLDWord,
+    DBNumber: 102,
+    Start: 2,
+    Amount: 1,
   },
   {
     Area: snap7.Area.S7AreaDB,
     WordLen: snap7.WordLen.S7WLByte,
-    DBNumber: 2,
-    Start: 0,
-    Amount: 4,
+    DBNumber: 102,
+    Start: 256,
+    Amount: 1,
   },
 ];
 const plc1_1_WriteMultiVar: snap7.MultiVarWrite[] = [
   {
     Area: snap7.Area.S7AreaDB,
     WordLen: snap7.WordLen.S7WLByte,
-    DBNumber: 1,
-    Start: 0,
+    DBNumber: 102,
+    Start: 256,
     Amount: 4,
     Data: Buffer.from([0x00, 0x00, 0x00, 0x00]),
   },
   {
     Area: snap7.Area.S7AreaDB,
     WordLen: snap7.WordLen.S7WLByte,
-    DBNumber: 2,
-    Start: 0,
+    DBNumber: 102,
+    Start: 270,
     Amount: 4,
     Data: Buffer.from([0x00, 0x00, 0x00, 0x00]),
   },
