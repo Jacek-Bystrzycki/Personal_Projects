@@ -1,7 +1,7 @@
 //=============== S7 Read utils =================
 
-export const bufferByteToBit = (data: Buffer): Array<number[]> => {
-  let bits: Array<number[]> = [];
+export const bufferByteToBitArray = (data: Buffer): Array<number[]> => {
+  const bits: Array<number[]> = [];
   const bitsAmount: number = data.length;
   for (let i = 0; i < bitsAmount; i++) {
     const buf = Buffer.copyBytesFrom(data, i * 1, 1);
@@ -16,8 +16,8 @@ export const bufferByteToBit = (data: Buffer): Array<number[]> => {
   return bits;
 };
 
-export const bufferWordToBit = (data: Buffer): Array<number[]> => {
-  let bits: Array<number[]> = [];
+export const bufferWordToBitArray = (data: Buffer): Array<number[]> => {
+  const bits: Array<number[]> = [];
   const bitsAmount: number = data.length / 2;
   for (let i = 0; i < bitsAmount; i++) {
     const buf = Buffer.copyBytesFrom(data, i * 1, 2);
@@ -35,8 +35,8 @@ export const bufferWordToBit = (data: Buffer): Array<number[]> => {
   return bits;
 };
 
-export const bufferDWordToBit = (data: Buffer): Array<number[]> => {
-  let bits: Array<number[]> = [];
+export const bufferDWordToBitArray = (data: Buffer): Array<number[]> => {
+  const bits: Array<number[]> = [];
   const bitsAmount: number = data.length / 4;
   for (let i = 0; i < bitsAmount; i++) {
     const buf = Buffer.copyBytesFrom(data, i * 1, 4);
@@ -60,7 +60,17 @@ export const bufferDWordToBit = (data: Buffer): Array<number[]> => {
 };
 
 export const bufferByteToInt = (data: Buffer): number[] => {
-  let byte: number[] = [];
+  const byte: number[] = [];
+  const intAmount: number = data.length;
+  for (let i = 0; i < intAmount; i++) {
+    const buf = Buffer.copyBytesFrom(data, i * 1, 1);
+    byte.push(buf.readInt8());
+  }
+  return byte;
+};
+
+export const bufferByteToUInt = (data: Buffer): number[] => {
+  const byte: number[] = [];
   const intAmount: number = data.length;
   for (let i = 0; i < intAmount; i++) {
     const buf = Buffer.copyBytesFrom(data, i * 1, 1);
@@ -70,7 +80,7 @@ export const bufferByteToInt = (data: Buffer): number[] => {
 };
 
 export const bufferWordToInt = (data: Buffer): number[] => {
-  let int: number[] = [];
+  const int: number[] = [];
   const intAmount: number = data.length / 2;
   for (let i = 0; i < intAmount; i++) {
     const buf = Buffer.copyBytesFrom(data, i * 2, 2);
@@ -79,8 +89,18 @@ export const bufferWordToInt = (data: Buffer): number[] => {
   return int;
 };
 
+export const bufferWordToUInt = (data: Buffer): number[] => {
+  const int: number[] = [];
+  const intAmount: number = data.length / 2;
+  for (let i = 0; i < intAmount; i++) {
+    const buf = Buffer.copyBytesFrom(data, i * 2, 2);
+    int.push(buf.readUInt16BE());
+  }
+  return int;
+};
+
 export const bufferDwordToInt = (data: Buffer): number[] => {
-  let dint: number[] = [];
+  const dint: number[] = [];
   const dintAmount: number = data.length / 4;
   for (let i = 0; i < dintAmount; i++) {
     const buf = Buffer.copyBytesFrom(data, i * 4, 4);
@@ -89,8 +109,18 @@ export const bufferDwordToInt = (data: Buffer): number[] => {
   return dint;
 };
 
+export const bufferDwordToUInt = (data: Buffer): number[] => {
+  const dint: number[] = [];
+  const dintAmount: number = data.length / 4;
+  for (let i = 0; i < dintAmount; i++) {
+    const buf = Buffer.copyBytesFrom(data, i * 4, 4);
+    dint.push(buf.readUInt32BE());
+  }
+  return dint;
+};
+
 export const bufferRealToFloat = (data: Buffer): number[] => {
-  let float: number[] = [];
+  const float: number[] = [];
   const floatAmount: number = data.length / 4;
   for (let i = 0; i < floatAmount; i++) {
     const buf = Buffer.copyBytesFrom(data, i * 4, 4);

@@ -7,7 +7,7 @@ export class CustomRouter {
     this._router = Router();
   }
 
-  public addMethod = (type: RequestTypes, path: PathType, controller: (req: Request, res: Response, next: NextFunction) => Promise<void>): void => {
+  public addMethod = (type: RequestTypes, path: PathType, controller: (req: Request, res: Response, next: NextFunction) => void): void => {
     switch (type) {
       case 'GET':
         this._router.get(path, controller);

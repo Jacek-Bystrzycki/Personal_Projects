@@ -11,8 +11,7 @@
     "build": "npx tsc",
     "start": "nodemon -x \"cls && node\" ./dist/index.js -q",
     "dev": "nodemon -x \"cls && ts-node\" ./src/index.ts -q",
-    "prod": "node ./dist/index.js",
-    "dev-mb": "nodemon -x \"cls && ts-node\" ./src/utils/plc/mb/read-write-registers.ts -q"
+    "prod": "node ./dist/index.js"
   },
   "author": "Jacek Bystrzycki",
   "license": "ISC",

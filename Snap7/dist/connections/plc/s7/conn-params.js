@@ -1,46 +1,83 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.s7plcDefinitions_2 = exports.s7plcDefinitions_1 = exports.s7_triggetTime = void 0;
-exports.s7_triggetTime = 3137;
+exports.s7_triggetTime = 1000;
 //===========DEFINITIONS FOR SERVER 1: ==================
 //== PLC 1 =====================
-const plc1_1 = ['172.16.0.10', 0, 1];
 const plc1_1_ReadMultiVar = [
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
-        WordLen: 2 /* snap7.WordLen.S7WLByte */,
-        DBNumber: 1,
-        Start: 0,
-        Amount: 4,
+        WordLen: 8 /* snap7.WordLen.S7WLReal */,
+        DBNumber: 102,
+        Start: 212,
+        Amount: 2,
+    },
+    {
+        Area: 132 /* snap7.Area.S7AreaDB */,
+        WordLen: 4 /* snap7.WordLen.S7WLWord */,
+        DBNumber: 102,
+        Start: 6,
+        Amount: 2,
+    },
+    {
+        Area: 132 /* snap7.Area.S7AreaDB */,
+        WordLen: 6 /* snap7.WordLen.S7WLDWord */,
+        DBNumber: 102,
+        Start: 2,
+        Amount: 1,
     },
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
         WordLen: 2 /* snap7.WordLen.S7WLByte */,
-        DBNumber: 2,
-        Start: 0,
-        Amount: 4,
+        DBNumber: 102,
+        Start: 314,
+        Amount: 1,
     },
 ];
 const plc1_1_WriteMultiVar = [
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
-        WordLen: 2 /* snap7.WordLen.S7WLByte */,
-        DBNumber: 1,
-        Start: 0,
-        Amount: 4,
-        Data: Buffer.from([0x00, 0x00, 0x00, 0x00]),
+        WordLen: 8 /* snap7.WordLen.S7WLReal */,
+        DBNumber: 102,
+        Start: 244,
+        Amount: 2,
+        Data: Buffer.from([0]),
+    },
+    {
+        Area: 132 /* snap7.Area.S7AreaDB */,
+        WordLen: 6 /* snap7.WordLen.S7WLDWord */,
+        DBNumber: 102,
+        Start: 306,
+        Amount: 1,
+        Data: Buffer.from([0]),
+    },
+    {
+        Area: 132 /* snap7.Area.S7AreaDB */,
+        WordLen: 4 /* snap7.WordLen.S7WLWord */,
+        DBNumber: 102,
+        Start: 310,
+        Amount: 1,
+        Data: Buffer.from([0]),
     },
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
         WordLen: 2 /* snap7.WordLen.S7WLByte */,
-        DBNumber: 2,
-        Start: 0,
+        DBNumber: 102,
+        Start: 314,
         Amount: 4,
-        Data: Buffer.from([0x00, 0x00, 0x00, 0x00]),
+        Data: Buffer.from([0]),
+    },
+    {
+        Area: 132 /* snap7.Area.S7AreaDB */,
+        WordLen: 1 /* snap7.WordLen.S7WLBit */,
+        DBNumber: 102,
+        Start: 314 * 8 + 5,
+        Amount: 1,
+        Data: Buffer.from([0]),
     },
 ];
+const plc1_1 = ['10.0.0.10', 0, 1, plc1_1_ReadMultiVar, plc1_1_WriteMultiVar];
 //== PLC 2 =====================
-const plc1_2 = ['172.16.0.11', 0, 1];
 const plc1_2_ReadMultiVar = [
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
@@ -64,7 +101,7 @@ const plc1_2_WriteMultiVar = [
         DBNumber: 1,
         Start: 0,
         Amount: 8,
-        Data: Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+        Data: Buffer.from([0]),
     },
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
@@ -72,20 +109,16 @@ const plc1_2_WriteMultiVar = [
         DBNumber: 2,
         Start: 0,
         Amount: 6,
-        Data: Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+        Data: Buffer.from([0]),
     },
 ];
+const plc1_2 = ['172.16.0.11', 0, 1, plc1_2_ReadMultiVar, plc1_2_WriteMultiVar];
 const s7_plcDefinitions_1 = [plc1_1, plc1_2];
-const s7_plcReadMultiVar_1 = [plc1_1_ReadMultiVar, plc1_2_ReadMultiVar];
-const s7_plcWriteMultiVar_1 = [plc1_1_WriteMultiVar, plc1_2_WriteMultiVar];
 exports.s7plcDefinitions_1 = {
     plcDefinitions: s7_plcDefinitions_1,
-    multiVarRead: s7_plcReadMultiVar_1,
-    multiVarWrite: s7_plcWriteMultiVar_1,
 };
 //===========DEFINITIONS FOR SERVER 2: ==================
 //== PLC 1 =====================
-const plc2_1 = ['172.16.0.12', 0, 1];
 const plc2_1_ReadMultiVar = [
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
@@ -109,7 +142,7 @@ const plc2_1_WriteMultiVar = [
         DBNumber: 1,
         Start: 0,
         Amount: 4,
-        Data: Buffer.from([0x00, 0x00, 0x00, 0x00]),
+        Data: Buffer.from([0]),
     },
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
@@ -117,11 +150,11 @@ const plc2_1_WriteMultiVar = [
         DBNumber: 2,
         Start: 0,
         Amount: 4,
-        Data: Buffer.from([0x00, 0x00, 0x00, 0x00]),
+        Data: Buffer.from([0]),
     },
 ];
+const plc2_1 = ['172.16.0.12', 0, 1, plc2_1_ReadMultiVar, plc2_1_WriteMultiVar];
 //== PLC 2 =====================
-const plc2_2 = ['172.16.0.13', 0, 1];
 const plc2_2_ReadMultiVar = [
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
@@ -145,7 +178,7 @@ const plc2_2_WriteMultiVar = [
         DBNumber: 1,
         Start: 0,
         Amount: 8,
-        Data: Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+        Data: Buffer.from([0]),
     },
     {
         Area: 132 /* snap7.Area.S7AreaDB */,
@@ -153,14 +186,11 @@ const plc2_2_WriteMultiVar = [
         DBNumber: 2,
         Start: 0,
         Amount: 6,
-        Data: Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+        Data: Buffer.from([0]),
     },
 ];
+const plc2_2 = ['172.16.0.13', 0, 1, plc2_2_ReadMultiVar, plc2_2_WriteMultiVar];
 const s7_plcDefinitions_2 = [plc2_1, plc2_2];
-const s7_plcReadMultiVar_2 = [plc2_1_ReadMultiVar, plc2_2_ReadMultiVar];
-const s7_plcWriteMultiVar_2 = [plc2_1_WriteMultiVar, plc2_2_WriteMultiVar];
 exports.s7plcDefinitions_2 = {
     plcDefinitions: s7_plcDefinitions_2,
-    multiVarRead: s7_plcReadMultiVar_2,
-    multiVarWrite: s7_plcWriteMultiVar_2,
 };

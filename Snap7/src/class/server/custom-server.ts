@@ -2,7 +2,8 @@ import { StandardServer } from './standard-server';
 import { ServerDevices } from '../../types/server/server-types';
 import { mainPaths } from '../../connections/server/conn-params';
 import { CustomRouter } from './router';
-import { S7_Controller, MB_Controller } from './controller';
+import { S7_Controller } from './controller/s7';
+import { MB_Controller } from './controller/mb';
 import { ErrorHandler, notFound } from './error-handler';
 
 export class CustomServer extends StandardServer {

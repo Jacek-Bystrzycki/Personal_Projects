@@ -18,7 +18,7 @@ const s7_read = (id, indexes) => {
         try {
             const s7_readData = yield __1.s7_plc_1.s7_readData(id, indexes);
             s7_readData.forEach((res, index) => {
-                const data = [...res.Data];
+                const data = [...res];
                 console.log(`${(0, get_date_as_string_1.getDateAsString)()}S7-Read - id ${id}, index ${indexes[index]}: [${data}]`);
             });
         }

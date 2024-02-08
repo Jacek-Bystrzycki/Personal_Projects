@@ -8,7 +8,7 @@ const s7_read = (id: number, indexes: number[]): void => {
     try {
       const s7_readData = await s7_plc_1.s7_readData(id, indexes);
       s7_readData.forEach((res, index) => {
-        const data = [...res.Data];
+        const data = [...res];
         console.log(`${getDateAsString()}S7-Read - id ${id}, index ${indexes[index]}: [${data}]`);
       });
     } catch (error) {
