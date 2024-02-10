@@ -6,30 +6,35 @@ import { CustomServer } from '../custom-server';
 
 export class MB_Controller {
   constructor(private readonly instance: CustomServer) {}
-  public read = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public read = (req: Request, res: Response, next: NextFunction): void => {
     const { id } = req.params;
-    const { registers } = req.query;
+    const { indexes } = req.query;
     try {
-      if (typeof registers !== 'string') throw new BadRequestError('Wrong registers');
-      const numId = parseInt(id, 10);
-      const data = await this.instance.devices.mb_definitions?.mb_ReadFromDevice(numId, JSON.parse(registers));
-      res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, data });
+      if (typeof indexes === 'string' && Array.isArray(JSON.parse(indexes))) {
+        const params: number[] = JSON.parse(indexes);
+        const numId = parseInt(id, 10);
+        const data = this.instance.devices.mb_definitions?.mb_readFromDevice(numId, params);
+        res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, data });
+      } else throw new BadRequestError('Wrong registers');
     } catch (error) {
       next(error);
     }
   };
 
-  public write = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public write = (req: Request, res: Response, next: NextFunction): void => {
     const { id } = req.params;
-    const { start } = req.query;
+    const { indexes } = req.query;
     const { data } = req.body;
+
     try {
-      if (typeof start !== 'string') throw new BadRequestError('Wrong start register');
-      if (!(Array.isArray(data) && data.every((index) => typeof index === 'number'))) throw new BadRequestError('Wrong data payload');
+      if (typeof indexes !== 'string') throw new BadRequestError('No indexes supplied');
+      const recvIndexes: number[] = JSON.parse(indexes);
+      if (!(Array.isArray(recvIndexes) && recvIndexes.every((index) => typeof index === 'number'))) throw new BadRequestError('Wrong indexes');
+      if (!(Array.isArray(data) && data.every((index) => Array.isArray(index) && index.every((item) => typeof item === 'number'))))
+        throw new BadRequestError('Wrong data payload');
       const numId = parseInt(id, 10);
-      const numStart = parseInt(start, 10);
-      await this.instance.devices.mb_definitions?.mb_WriteToDevice(numId, numStart, data);
-      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Created` });
+      this.instance.devices.mb_definitions?.mb_writeToDevice(numId, recvIndexes, data);
+      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
     } catch (error) {
       next(error);
     }

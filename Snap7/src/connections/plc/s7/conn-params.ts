@@ -1,5 +1,5 @@
-import snap7 = require('node-snap7');
 import { S7_ConnectionParamType } from '../../../types/plc/s7/conn-param';
+import type { S7_ReadTagDef, S7_WriteTagDef } from '../../../types/plc/s7/format';
 
 export const s7_triggetTime: number = 1000;
 //=======================================================
@@ -9,8 +9,8 @@ export class S7_Definition {
     private readonly ip: string,
     private readonly rack: number,
     private readonly slot: number,
-    private readonly readTags: snap7.MultiVarRead[],
-    private readonly writeTags: snap7.MultiVarWrite[]
+    private readonly readTags: S7_ReadTagDef[],
+    private readonly writeTags: S7_WriteTagDef[]
   ) {
     this._plc = [this.ip, this.rack, this.slot, this.readTags, this.writeTags];
   }

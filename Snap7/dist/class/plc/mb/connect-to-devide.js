@@ -13,12 +13,15 @@ exports.MB_ConnectToDevice = void 0;
 const net_1 = require("net");
 const Modbus = require("jsmodbus");
 const errors_1 = require("../../../types/server/errors");
+const fixed_1 = require("set-interval-async/fixed");
 class MB_ConnectToDevice {
-    constructor(options) {
+    constructor(options, readParams, writeParams) {
         this.options = options;
-        this._readBuffer = [];
+        this.readParams = readParams;
+        this.writeParams = writeParams;
         this._isConnected = false;
-        this.reconnect = () => {
+        this._lastErrorMsg = '';
+        this.loop = () => {
             this._socket.on('error', () => {
                 this._isConnected = false;
             });
@@ -28,19 +31,39 @@ class MB_ConnectToDevice {
             this._socket.on('connect', () => {
                 this._isConnected = true;
             });
-            setInterval(() => {
+            (0, fixed_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
                 if (!this._isConnected) {
+                    this._lastErrorMsg = 'Device offline';
                     this._socket.connect(this.options);
                 }
-            }, 1000);
+                else {
+                    try {
+                        this._readBuffer.forEach((buffer, index) => __awaiter(this, void 0, void 0, function* () {
+                            const data = yield this.mb_ReadRegisters(buffer.params);
+                            this._readBuffer[index] = Object.assign(Object.assign({}, buffer), { data });
+                        }));
+                        const writeData = this._writeBuffer.filter((data) => data.execute);
+                        if (writeData.length > 0) {
+                            writeData.forEach((data) => __awaiter(this, void 0, void 0, function* () {
+                                yield this.mb_WriteRegisters(data.params);
+                            }));
+                            this._writeBuffer.forEach((data) => (data.execute = false));
+                        }
+                    }
+                    catch (error) {
+                        if (error instanceof errors_1.CustomError)
+                            this._lastErrorMsg = error.message;
+                        this._lastErrorMsg = 'Unknown error';
+                    }
+                }
+            }), 1000);
         };
-        this.mb_ReadRegisters = (regs) => __awaiter(this, void 0, void 0, function* () {
+        this.mb_ReadRegisters = (params) => __awaiter(this, void 0, void 0, function* () {
             const promise = new Promise((resolve, reject) => {
                 this._client
-                    .readHoldingRegisters(...regs)
+                    .readHoldingRegisters(params.start, params.count)
                     .then(({ response }) => {
-                    this._readBuffer = response.body.valuesAsArray;
-                    resolve(this._readBuffer);
+                    resolve(response.body.valuesAsArray);
                 })
                     .catch((err) => {
                     const error = this.mb_handleErrors(err);
@@ -52,10 +75,10 @@ class MB_ConnectToDevice {
             });
             return Promise.race([promise, timeout]);
         });
-        this.mb_WriteRegisters = (start, data) => __awaiter(this, void 0, void 0, function* () {
+        this.mb_WriteRegisters = (params) => __awaiter(this, void 0, void 0, function* () {
             const promise = new Promise((resolve, reject) => {
                 this._client
-                    .writeMultipleRegisters(start, data)
+                    .writeMultipleRegisters(params.start, params.data)
                     .then(() => {
                     resolve();
                 })
@@ -91,10 +114,28 @@ class MB_ConnectToDevice {
         };
         this._socket = new net_1.Socket();
         this._client = new Modbus.client.TCP(this._socket);
-        this.reconnect();
+        this._readBuffer = this.readParams.map((params) => {
+            return { params, data: [] };
+        });
+        this._writeBuffer = this.writeParams.map((params) => {
+            return { params, execute: false };
+        });
+        this.loop();
     }
     get readBuffer() {
         return this._readBuffer;
+    }
+    get writeBuffer() {
+        return this._writeBuffer;
+    }
+    set writeBuffer(data) {
+        this._writeBuffer = data;
+    }
+    get isConnected() {
+        return this._isConnected;
+    }
+    get lastErrorMsg() {
+        return this._lastErrorMsg;
     }
 }
 exports.MB_ConnectToDevice = MB_ConnectToDevice;

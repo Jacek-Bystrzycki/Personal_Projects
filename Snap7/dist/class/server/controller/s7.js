@@ -16,41 +16,75 @@ class S7_Controller {
             try {
                 if (typeof indexes !== 'string')
                     throw new errors_1.BadRequestError('Wrong indexes');
+                const indexesNumber = JSON.parse(indexes);
+                if (!(Array.isArray(indexesNumber) && indexesNumber.every((item) => typeof item === 'number')))
+                    throw new errors_1.BadRequestError('indexes with formats');
                 const numId = parseInt(id, 10);
-                const resp = (_a = this.instance.devices.s7_definitions) === null || _a === void 0 ? void 0 : _a.s7_readData(numId, JSON.parse(indexes));
+                const resp = (_a = this.instance.devices.s7_definitions) === null || _a === void 0 ? void 0 : _a.s7_readData(numId, indexesNumber);
                 if (resp) {
                     const data = [];
-                    const indexesNumber = JSON.parse(indexes);
-                    if (Array.isArray(indexesNumber) && indexesNumber.every((item) => typeof item === 'number')) {
-                        const types = indexesNumber.map((index) => {
-                            var _a;
-                            return (_a = this.instance.devices.s7_definitions) === null || _a === void 0 ? void 0 : _a.instances[numId - 1].instance.readBuffer[index - 1].params.WordLen;
-                        });
-                        types.forEach((type, index) => {
-                            switch (type) {
-                                case 2 /* snap7.WordLen.S7WLByte */:
+                    const types = indexesNumber.map((index) => {
+                        var _a;
+                        return (_a = this.instance.devices.s7_definitions) === null || _a === void 0 ? void 0 : _a.instances[numId - 1].instance.readBuffer[index - 1].params.WordLen;
+                    });
+                    const formats = indexesNumber.map((index) => {
+                        var _a;
+                        return (_a = this.instance.devices.s7_definitions) === null || _a === void 0 ? void 0 : _a.instances[numId - 1].instance.readBuffer[index - 1].format;
+                    });
+                    types.forEach((type, index) => {
+                        switch (type) {
+                            case 2 /* snap7.WordLen.S7WLByte */:
+                                if (formats[index] === 'Byte_As_BitArray') {
                                     data.push((0, buffer_to_data_1.bufferByteToBitArray)(resp[index]));
-                                    // data.push(bufferByteToInt(resp[index]));
-                                    // data.push(bufferByteToUInt(resp[index]));
                                     break;
-                                case 4 /* snap7.WordLen.S7WLWord */:
-                                    // data.push(bufferWordToBitArray(resp[index]));
+                                }
+                                if (formats[index] === 'Byte_As_Int') {
+                                    data.push((0, buffer_to_data_1.bufferByteToInt)(resp[index]));
+                                    break;
+                                }
+                                if (formats[index] === 'Byte_As_Uint') {
+                                    data.push((0, buffer_to_data_1.bufferByteToUInt)(resp[index]));
+                                    break;
+                                }
+                                throw new errors_1.BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
+                            case 4 /* snap7.WordLen.S7WLWord */:
+                                if (formats[index] === 'Word_As_BitArray') {
+                                    data.push((0, buffer_to_data_1.bufferWordToBitArray)(resp[index]));
+                                    break;
+                                }
+                                if (formats[index] === 'Word_As_Int') {
                                     data.push((0, buffer_to_data_1.bufferWordToInt)(resp[index]));
-                                    // data.push(bufferWordToUInt(resp[index]));
                                     break;
-                                case 6 /* snap7.WordLen.S7WLDWord */:
-                                    // data.push(bufferDWordToBitArray(resp[index]));
+                                }
+                                if (formats[index] === 'Word_As_Uint') {
+                                    data.push((0, buffer_to_data_1.bufferWordToUInt)(resp[index]));
+                                    break;
+                                }
+                                throw new errors_1.BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
+                            case 6 /* snap7.WordLen.S7WLDWord */:
+                                if (formats[index] === 'Dword_As_BitArray') {
+                                    data.push((0, buffer_to_data_1.bufferDWordToBitArray)(resp[index]));
+                                    break;
+                                }
+                                if (formats[index] === 'Dword_As_Int') {
                                     data.push((0, buffer_to_data_1.bufferDwordToInt)(resp[index]));
-                                    // data.push(bufferDwordToUInt(resp[index]));
                                     break;
-                                case 8 /* snap7.WordLen.S7WLReal */:
+                                }
+                                if (formats[index] === 'Dword_As_Uint') {
+                                    data.push((0, buffer_to_data_1.bufferDwordToUInt)(resp[index]));
+                                    break;
+                                }
+                                throw new errors_1.BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
+                            case 8 /* snap7.WordLen.S7WLReal */:
+                                if (formats[index] === 'Real') {
                                     data.push((0, buffer_to_data_1.bufferRealToFloat)(resp[index]));
                                     break;
-                                default:
-                                    throw new errors_1.BadRequestError('Unsupported data type');
-                            }
-                        });
-                    }
+                                }
+                                throw new errors_1.BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
+                            default:
+                                throw new errors_1.BadRequestError('Unsupported data type');
+                        }
+                    });
                     res.status(http_status_codes_1.StatusCodes.OK).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data });
                 }
                 else
@@ -86,29 +120,66 @@ class S7_Controller {
                             throw new errors_1.BadRequestError(`Wrong amount of data payload`);
                         return (_d = this.instance.devices.s7_definitions) === null || _d === void 0 ? void 0 : _d.instances[numId - 1].instance.writeBuffer[index - 1].params.WordLen;
                     });
+                    const formats = indexesNumber.map((index) => {
+                        var _a;
+                        return (_a = this.instance.devices.s7_definitions) === null || _a === void 0 ? void 0 : _a.instances[numId - 1].instance.writeBuffer[index - 1].format;
+                    });
                     types.forEach((type, index) => {
                         switch (type) {
                             case 1 /* snap7.WordLen.S7WLBit */:
-                                buffers.push((0, data_to_buffer_1.bitToBuffer)(data[index]));
-                                break;
+                                if (formats[index] === 'Bit') {
+                                    buffers.push((0, data_to_buffer_1.bitToBuffer)(data[index]));
+                                    break;
+                                }
+                                throw new errors_1.BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
                             case 2 /* snap7.WordLen.S7WLByte */:
-                                // buffers.push(byteToIntBuffer(data[index]));
-                                // buffers.push(byteToUIntBuffer(data[index]));
-                                buffers.push((0, data_to_buffer_1.bit8ArrayToBuffer)(data[index]));
-                                break;
+                                if (formats[index] === 'Byte_As_BitArray') {
+                                    buffers.push((0, data_to_buffer_1.bit8ArrayToBuffer)(data[index]));
+                                    break;
+                                }
+                                if (formats[index] === 'Byte_As_Int') {
+                                    buffers.push((0, data_to_buffer_1.byteToIntBuffer)(data[index]));
+                                    break;
+                                }
+                                if (formats[index] === 'Byte_As_Uint') {
+                                    buffers.push((0, data_to_buffer_1.byteToUIntBuffer)(data[index]));
+                                    break;
+                                }
+                                throw new errors_1.BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
                             case 4 /* snap7.WordLen.S7WLWord */:
-                                // buffers.push(bit16ArrayToBuffer(data[index]));
-                                // buffers.push(wordToIntBuffer(data[index]));
-                                buffers.push((0, data_to_buffer_1.wordToUIntBuffer)(data[index]));
-                                break;
+                                if (formats[index] === 'Word_As_BitArray') {
+                                    buffers.push((0, data_to_buffer_1.bit16ArrayToBuffer)(data[index]));
+                                    break;
+                                }
+                                if (formats[index] === 'Word_As_Int') {
+                                    buffers.push((0, data_to_buffer_1.wordToIntBuffer)(data[index]));
+                                    break;
+                                }
+                                if (formats[index] === 'Word_As_Uint') {
+                                    buffers.push((0, data_to_buffer_1.wordToUIntBuffer)(data[index]));
+                                    break;
+                                }
+                                throw new errors_1.BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
                             case 6 /* snap7.WordLen.S7WLDWord */:
-                                // buffers.push(bit32ArrayToBuffer(data[index]));
-                                // buffers.push(dwordToIntBuffer(data[index]));
-                                buffers.push((0, data_to_buffer_1.dwordToUIntBuffer)(data[index]));
-                                break;
+                                if (formats[index] === 'Dword_As_BitArray') {
+                                    buffers.push((0, data_to_buffer_1.bit32ArrayToBuffer)(data[index]));
+                                    break;
+                                }
+                                if (formats[index] === 'Dword_As_Int') {
+                                    buffers.push((0, data_to_buffer_1.dwordToIntBuffer)(data[index]));
+                                    break;
+                                }
+                                if (formats[index] === 'Dword_As_Uint') {
+                                    buffers.push((0, data_to_buffer_1.dwordToUIntBuffer)(data[index]));
+                                    break;
+                                }
+                                throw new errors_1.BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
                             case 8 /* snap7.WordLen.S7WLReal */:
-                                buffers.push((0, data_to_buffer_1.floatToRealBuffer)(data[index]));
-                                break;
+                                if (formats[index] === 'Real') {
+                                    buffers.push((0, data_to_buffer_1.floatToRealBuffer)(data[index]));
+                                    break;
+                                }
+                                throw new errors_1.BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
                             default:
                                 throw new errors_1.BadRequestError('Unsupported data type');
                         }

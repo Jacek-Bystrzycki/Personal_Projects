@@ -2,26 +2,28 @@ import snap7 = require('node-snap7');
 import { S7_DataPLC } from './data-plc';
 import { s7_triggetTime } from '../../../connections/plc/s7/conn-params';
 import { CustomError } from '../../../types/server/errors';
-import { ReadBuffer, WriteBuffer } from '../../../types/plc/s7/buffers';
+import { S7_ReadBuffer, S7_WriteBuffer } from '../../../types/plc/s7/buffers';
+import { setIntervalAsync } from 'set-interval-async/fixed';
+import type { S7_ReadTagDef, S7_WriteTagDef } from '../../../types/plc/s7/format';
 
 export class S7_ConnectToPlc extends S7_DataPLC {
-  private _readBuffer: ReadBuffer[];
-  private _writeBuffer: WriteBuffer[];
+  private _readBuffer: S7_ReadBuffer[];
+  private _writeBuffer: S7_WriteBuffer[];
   public lastErrorMsg: string = '';
   public isError: boolean = true;
   constructor(
     public readonly ip: string,
     public readonly rack: number,
     public readonly slot: number,
-    public readData: snap7.MultiVarRead[],
-    public writeData: snap7.MultiVarWrite[]
+    public readData: S7_ReadTagDef[],
+    public writeData: S7_WriteTagDef[]
   ) {
     super();
-    this._readBuffer = readData.map((params) => {
-      return { params, data: Buffer.from('0') };
+    this._readBuffer = readData.map((def) => {
+      return { params: def.params, format: def.format, data: Buffer.from('0') };
     });
-    this._writeBuffer = writeData.map((params) => {
-      return { params, execute: false };
+    this._writeBuffer = writeData.map((def) => {
+      return { params: def.params, format: def.format, execute: false };
     });
     this.loop();
   }
@@ -50,7 +52,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
     const readParams: snap7.MultiVarRead[] = this._readBuffer.map((param) => {
       return param.params;
     });
-    setInterval(async () => {
+    setIntervalAsync(async () => {
       try {
         await this.s7_connectPlc();
         const data: snap7.MultiVarsReadResult[] = await this.s7_readFromPlc(readParams);
@@ -74,19 +76,19 @@ export class S7_ConnectToPlc extends S7_DataPLC {
     }, s7_triggetTime);
   };
 
-  public get readBuffer(): ReadBuffer[] {
+  public get readBuffer(): S7_ReadBuffer[] {
     return this._readBuffer;
   }
 
-  public set readBuffer(data: ReadBuffer[]) {
+  public set readBuffer(data: S7_ReadBuffer[]) {
     this._readBuffer = data;
   }
 
-  public get writeBuffer(): WriteBuffer[] {
+  public get writeBuffer(): S7_WriteBuffer[] {
     return this._writeBuffer;
   }
 
-  public set writeBuffer(data: WriteBuffer[]) {
+  public set writeBuffer(data: S7_WriteBuffer[]) {
     this._writeBuffer = data;
   }
 }

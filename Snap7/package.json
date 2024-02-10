@@ -23,6 +23,7 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.11.0",
     "@types/node-snap7": "^0.2.24",
+    "@types/set-interval-async": "^1.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "exceljs": "^4.4.0",
@@ -30,7 +31,8 @@
     "http-status-codes": "^2.3.0",
     "jsmodbus": "^4.0.10",
     "morgan": "^1.10.0",
-    "node-snap7": "^1.0.7"
+    "node-snap7": "^1.0.7",
+    "set-interval-async": "^3.0.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
