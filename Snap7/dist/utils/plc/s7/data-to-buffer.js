@@ -48,9 +48,7 @@ const bit16ArrayToBuffer = (data) => {
                 }
                 factor *= 2;
             }
-            const buf = Buffer.alloc(2, 0);
-            buf.writeUInt16BE(swap16(dec));
-            bufferArray.push(buf);
+            bufferArray.push(Buffer.from([dec]));
         });
         return Buffer.concat(bufferArray);
     }
@@ -73,10 +71,7 @@ const bit32ArrayToBuffer = (data) => {
                 }
                 factor *= 2;
             }
-            const buf = Buffer.alloc(4, 0);
-            buf.writeInt32BE(swap32(dec));
-            console.log(buf);
-            bufferArray.push(buf);
+            bufferArray.push(Buffer.from([dec]));
         });
         return Buffer.concat(bufferArray);
     }
@@ -168,9 +163,3 @@ const floatToRealBuffer = (data) => {
         throw new errors_1.BadRequestError('Wrong data in payload');
 };
 exports.floatToRealBuffer = floatToRealBuffer;
-function swap16(val) {
-    return ((val & 0xff) << 8) | ((val >> 8) & 0xff);
-}
-function swap32(val) {
-    return ((val & 0xff) << 24) | ((val & 0xff00) << 8) | ((val >> 8) & 0xff00) | ((val >> 24) & 0xff);
-}

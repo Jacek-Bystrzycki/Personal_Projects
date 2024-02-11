@@ -13,7 +13,6 @@ exports.S7_ConnectToPlc = void 0;
 const data_plc_1 = require("./data-plc");
 const conn_params_1 = require("../../../connections/plc/s7/conn-params");
 const errors_1 = require("../../../types/server/errors");
-const fixed_1 = require("set-interval-async/fixed");
 class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
     constructor(ip, rack, slot, readData, writeData) {
         super();
@@ -48,7 +47,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
             const readParams = this._readBuffer.map((param) => {
                 return param.params;
             });
-            (0, fixed_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
+            setInterval(() => __awaiter(this, void 0, void 0, function* () {
                 try {
                     yield this.s7_connectPlc();
                     const data = yield this.s7_readFromPlc(readParams);
@@ -73,11 +72,11 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                 }
             }), conn_params_1.s7_triggetTime);
         };
-        this._readBuffer = readData.map((def) => {
-            return { params: def.params, format: def.format, data: Buffer.from('0') };
+        this._readBuffer = readData.map((params) => {
+            return { params, data: Buffer.from('0') };
         });
-        this._writeBuffer = writeData.map((def) => {
-            return { params: def.params, format: def.format, execute: false };
+        this._writeBuffer = writeData.map((params) => {
+            return { params, execute: false };
         });
         this.loop();
     }

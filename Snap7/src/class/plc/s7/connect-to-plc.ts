@@ -9,8 +9,6 @@ import type { S7_ReadTagDef, S7_WriteTagDef } from '../../../types/plc/s7/format
 export class S7_ConnectToPlc extends S7_DataPLC {
   private _readBuffer: S7_ReadBuffer[];
   private _writeBuffer: S7_WriteBuffer[];
-  public lastErrorMsg: string = '';
-  public isError: boolean = true;
   constructor(
     public readonly ip: string,
     public readonly rack: number,
@@ -20,10 +18,10 @@ export class S7_ConnectToPlc extends S7_DataPLC {
   ) {
     super();
     this._readBuffer = readData.map((def) => {
-      return { params: def.params, format: def.format, data: Buffer.from('0') };
+      return { params: def.params, format: def.format, data: Buffer.from([0]), isError: true, status: 'Init Error' };
     });
     this._writeBuffer = writeData.map((def) => {
-      return { params: def.params, format: def.format, execute: false };
+      return { params: def.params, format: def.format, execute: false, isError: false, status: 'No write command triggered yet' };
     });
     this.loop();
   }
@@ -55,23 +53,66 @@ export class S7_ConnectToPlc extends S7_DataPLC {
     setIntervalAsync(async () => {
       try {
         await this.s7_connectPlc();
-        const data: snap7.MultiVarsReadResult[] = await this.s7_readFromPlc(readParams);
-        data.forEach((result, index) => {
-          this._readBuffer[index].data = result.Data;
+        readParams.forEach(async (param, index) => {
+          try {
+            const data: snap7.MultiVarsReadResult[] = await this.s7_readFromPlc([param]);
+            this._readBuffer[index].data = data[0].Data;
+            this._readBuffer[index].isError = false;
+            this._readBuffer[index].status = 'OK';
+          } catch (error) {
+            this._readBuffer[index].data = Buffer.from([0]);
+            this._readBuffer[index].isError = true;
+            if (error instanceof CustomError) {
+              this._readBuffer[index].status = error.message;
+              this._writeBuffer[index].status = this._readBuffer[index].status;
+            } else {
+              this._readBuffer[index].status = 'Unknown error';
+              this._writeBuffer[index].status = this._readBuffer[index].status;
+            }
+          }
         });
-        const writeData: snap7.MultiVarWrite[] = this._writeBuffer
-          .filter((data) => data.execute)
-          .map((data) => {
-            return data.params;
-          });
-        if (writeData.length > 0) {
-          await this.s7_writeToPlc(writeData);
-          this._writeBuffer.forEach((data) => (data.execute = false));
-        }
-        this.isError = false;
       } catch (error) {
-        if (error instanceof CustomError) this.lastErrorMsg = error.message;
-        this.isError = true;
+        this._readBuffer.forEach((data, index) => {
+          data.isError = true;
+          data.data = Buffer.from([0]);
+          if (error instanceof CustomError) {
+            data.status = error.message;
+            this._writeBuffer[index].status = data.status;
+          } else {
+            data.status = 'Unknown error';
+            this._writeBuffer[index].status = data.status;
+          }
+        });
+      }
+      try {
+        type WtiteData = {
+          data: snap7.MultiVarWrite;
+          index: number;
+          execute: boolean;
+        };
+        const writeData: WtiteData[] = this._writeBuffer
+          .map((data, index) => {
+            return { data: data.params, index, execute: data.execute };
+          })
+          .filter((data) => data.execute);
+        writeData.forEach(async (data) => {
+          if (!this._readBuffer[data.index].isError) {
+            await this.s7_writeToPlc([data.data]);
+            this._writeBuffer[data.index].execute = false;
+            this._writeBuffer[data.index].isError = false;
+            this._writeBuffer[data.index].status = 'Done';
+          } else {
+            this._writeBuffer[data.index].execute = false;
+            this._writeBuffer[data.index].isError = true;
+          }
+        });
+      } catch (error) {
+        this._writeBuffer.forEach((data) => {
+          data.isError = true;
+          data.execute = false;
+          if (error instanceof CustomError) data.status = error.message;
+          else data.status = 'Unknown error';
+        });
       }
     }, s7_triggetTime);
   };

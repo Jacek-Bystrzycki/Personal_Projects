@@ -5,7 +5,7 @@ import { MB_ReadParams, MB_WriteParams } from '../../../types/plc/mb/buffers';
 //== Device 1 ===========================
 const query1Read: MB_ReadParams[] = [
   { start: 0, count: 3 },
-  { start: 2, count: 2 },
+  { start: 10, count: 2 },
 ];
 const query1Write: MB_WriteParams[] = [
   { start: 0, data: [0x00, 0x00] },

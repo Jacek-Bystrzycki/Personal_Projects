@@ -1,7 +1,7 @@
 import Excel from 'exceljs';
 import path from 'path';
 import snap7 = require('node-snap7');
-import type { S7_ReadTagDef, S7_WriteTagDef, S7_Format } from '../types/plc/s7/format';
+import type { S7_Tags, S7_ReadTagDef, S7_WriteTagDef, S7_Format } from '../types/plc/s7/format';
 import { s7_format } from '../types/plc/s7/format';
 
 const getCellValue = (row: Excel.Row, cellIndex: number): string => {
@@ -39,7 +39,7 @@ const getS7Format = (data: string): S7_Format => {
   throw new Error(`Wrong S7 Format`);
 };
 
-export const createS7ReadTags = async (file: string): Promise<S7_ReadTagDef[]> => {
+const createS7ReadTags = async (file: string): Promise<S7_ReadTagDef[]> => {
   const filePath = path.resolve(__dirname, file);
   const workbook = new Excel.Workbook();
   const content = await workbook.xlsx.readFile(filePath);
@@ -48,10 +48,21 @@ export const createS7ReadTags = async (file: string): Promise<S7_ReadTagDef[]> =
   const rowStartIndex = 4;
 
   const rows = worksheet.getRows(rowStartIndex, 1003) ?? [];
-  const noEmptyRow = rows.filter((row) => row.getCell(3).value);
+  const noEmptyRows: Excel.Row[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    if (
+      rows[i].getCell(3).value &&
+      rows[i].getCell(4).value &&
+      rows[i].getCell(5).value !== 'undefined' &&
+      rows[i].getCell(6).value &&
+      rows[i].getCell(7).value
+    )
+      noEmptyRows.push(rows[i]);
+    else break;
+  }
 
-  const tags: S7_ReadTagDef[] = noEmptyRow.map((row): S7_ReadTagDef => {
-    const amount: number = parseInt(getCellValue(row, 6), 10);
+  const tags: S7_ReadTagDef[] = noEmptyRows.map((row): S7_ReadTagDef => {
+    const amount: number = parseInt(getCellValue(row, 7), 10);
     if (amount < 1) throw new Error('Wrong Amount');
     return {
       params: {
@@ -59,26 +70,37 @@ export const createS7ReadTags = async (file: string): Promise<S7_ReadTagDef[]> =
         WordLen: getS7WordLen(getCellValue(row, 3)),
         DBNumber: parseInt(getCellValue(row, 4), 10),
         Start: parseInt(getCellValue(row, 5), 10),
-        Amount: amount,
+        Amount: getS7WordLen(getCellValue(row, 3)) === snap7.WordLen.S7WLBit ? 1 : amount,
       },
-      format: getS7Format(getCellValue(row, 7)),
+      format: getS7Format(getCellValue(row, 6)),
     };
   });
   return tags;
 };
 
-export const createS7WriteTags = async (file: string): Promise<S7_WriteTagDef[]> => {
+const createS7WriteTags = async (file: string): Promise<S7_WriteTagDef[]> => {
   const filePath = path.resolve(__dirname, file);
   const workbook = new Excel.Workbook();
   const content = await workbook.xlsx.readFile(filePath);
 
-  const worksheet = content.worksheets[1];
+  const worksheet = content.worksheets[0];
   const rowStartIndex = 4;
   const rows = worksheet.getRows(rowStartIndex, 1003) ?? [];
-  const noEmptyRow = rows.filter((row) => row.getCell(3).value);
+  const noEmptyRows: Excel.Row[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    if (
+      rows[i].getCell(3).value &&
+      rows[i].getCell(4).value &&
+      rows[i].getCell(5).value !== 'undefined' &&
+      rows[i].getCell(6).value &&
+      rows[i].getCell(7).value
+    )
+      noEmptyRows.push(rows[i]);
+    else break;
+  }
 
-  const tags: S7_WriteTagDef[] = noEmptyRow.map((row): S7_WriteTagDef => {
-    const amount: number = parseInt(getCellValue(row, 6), 10);
+  const tags: S7_WriteTagDef[] = noEmptyRows.map((row): S7_WriteTagDef => {
+    const amount: number = parseInt(getCellValue(row, 7), 10);
     if (amount < 1) throw new Error('Wrong Amount');
     return {
       params: {
@@ -86,11 +108,17 @@ export const createS7WriteTags = async (file: string): Promise<S7_WriteTagDef[]>
         WordLen: getS7WordLen(getCellValue(row, 3)),
         DBNumber: parseInt(getCellValue(row, 4), 10),
         Start: parseInt(getCellValue(row, 5), 10),
-        Amount: amount,
+        Amount: getS7WordLen(getCellValue(row, 3)) === snap7.WordLen.S7WLBit ? 1 : amount,
         Data: Buffer.from([0]),
       },
-      format: getS7Format(getCellValue(row, 7)),
+      format: getS7Format(getCellValue(row, 6)),
     };
   });
   return tags;
+};
+
+export const createS7Tags = async (file: string): Promise<S7_Tags> => {
+  const read: S7_ReadTagDef[] = await createS7ReadTags(file);
+  const write: S7_WriteTagDef[] = await createS7WriteTags(file);
+  return { read, write };
 };

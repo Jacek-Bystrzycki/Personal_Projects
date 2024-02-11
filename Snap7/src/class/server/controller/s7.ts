@@ -34,13 +34,16 @@ export class S7_Controller {
   constructor(private readonly instance: CustomServer) {}
   public read = (req: Request, res: Response, next: NextFunction): void => {
     const { id } = req.params;
-    const { indexes } = req.query;
+    const { tags } = req.query;
+    const queryExists: boolean = Object.keys(req.query).length > 0;
+    const numId = parseInt(id, 10);
+    const allIndexes: number[] | undefined = this.instance.devices.s7_definitions?.instances[numId - 1].instance.readBuffer.map((_, index) => index + 1);
+    const indexes = queryExists ? tags : JSON.stringify(allIndexes);
     try {
       if (typeof indexes !== 'string') throw new BadRequestError('Wrong indexes');
       const indexesNumber: unknown = JSON.parse(indexes);
       if (!(Array.isArray(indexesNumber) && indexesNumber.every((item) => typeof item === 'number'))) throw new BadRequestError('indexes with formats');
 
-      const numId = parseInt(id, 10);
       const resp = this.instance.devices.s7_definitions?.s7_readData(numId, indexesNumber);
       if (resp) {
         const data: Array<number | Array<number | Array<number>>> = [];
@@ -52,6 +55,12 @@ export class S7_Controller {
         });
         types.forEach((type, index) => {
           switch (type) {
+            case snap7.WordLen.S7WLBit:
+              if (formats[index] === 'Bit') {
+                data.push(...resp[index]);
+                break;
+              }
+              throw new BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
             case snap7.WordLen.S7WLByte:
               if (formats[index] === 'Byte_As_BitArray') {
                 data.push(bufferByteToBitArray(resp[index]));
@@ -113,7 +122,8 @@ export class S7_Controller {
 
   public write = (req: Request, res: Response, next: NextFunction): void => {
     const { id } = req.params;
-    const { indexes } = req.query;
+    const { tags } = req.query;
+    const indexes = tags;
     const { data } = req.body;
     try {
       if (!(Array.isArray(data) && data.every((item) => Array.isArray(item) && item.every((index) => typeof index === 'number' || Array.isArray(index)))))

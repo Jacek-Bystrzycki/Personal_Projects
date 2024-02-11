@@ -25,3 +25,8 @@ export type S7_WriteTagDef = {
   params: snap7.MultiVarWrite;
   format: S7_Format;
 };
+
+export type S7_Tags = {
+  read: S7_ReadTagDef[];
+  write: S7_WriteTagDef[];
+};

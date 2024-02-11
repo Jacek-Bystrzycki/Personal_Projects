@@ -20,7 +20,7 @@ export class MB_ConnectToDevice {
     this._writeBuffer = this.writeParams.map((params): MB_WriteBuffer => {
       return { params, execute: false };
     });
-    this.loop();
+    // this.loop();
   }
 
   private loop = () => {
@@ -53,7 +53,7 @@ export class MB_ConnectToDevice {
           }
         } catch (error) {
           if (error instanceof CustomError) this._lastErrorMsg = error.message;
-          this._lastErrorMsg = 'Unknown error';
+          else this._lastErrorMsg = 'Unknown error';
         }
       }
     }, 1000);

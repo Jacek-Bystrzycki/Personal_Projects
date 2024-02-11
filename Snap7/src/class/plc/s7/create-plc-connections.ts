@@ -26,10 +26,10 @@ export class S7_CreateConnections {
       throw new BadRequestError(`Not all indexes [${indexes}] exist in params definitions`);
     }
 
-    if (this._instances[dataIndex].instance.isError) throw new InternalError(this._instances[dataIndex].instance.lastErrorMsg);
-
     const data: Buffer[] = [];
     indexes.forEach((index) => {
+      if (this._instances[dataIndex].instance.readBuffer[index - 1].isError)
+        throw new InternalError(this._instances[dataIndex].instance.readBuffer[index - 1].status);
       data.push(this._instances[dataIndex].instance.readBuffer[index - 1].data);
     });
 
@@ -41,11 +41,11 @@ export class S7_CreateConnections {
   public s7_writeData = (id: number, indexes: number[], dataToWrite: Buffer[]): void => {
     const dataIndex: number = this._instances.findIndex((instance) => instance.id === id);
 
-    if (this._instances[dataIndex].instance.isError) throw new InternalError(this._instances[dataIndex].instance.lastErrorMsg);
-
     indexes.forEach((index, i) => {
-      this._instances[dataIndex].instance.writeBuffer[index - 1].params.Data = dataToWrite[i];
       this._instances[dataIndex].instance.writeBuffer[index - 1].execute = true;
+      if (this._instances[dataIndex].instance.readBuffer[index - 1].isError)
+        throw new InternalError(this._instances[dataIndex].instance.writeBuffer[index - 1].status);
+      this._instances[dataIndex].instance.writeBuffer[index - 1].params.Data = dataToWrite[i];
     });
   };
 

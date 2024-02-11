@@ -4,21 +4,19 @@ import { MB_CreateConnections } from './class/plc/mb/create-mb-connection';
 import { mb_deviceDefinitions_1 } from './connections/plc/mb/conn-params';
 import { CustomServer } from './class/server/custom-server';
 import { port } from './connections/server/conn-params';
-import type { S7_ReadTagDef, S7_WriteTagDef } from './types/plc/s7/format';
-import { createS7ReadTags, createS7WriteTags } from './tags/importFile';
+import type { S7_Tags } from './types/plc/s7/format';
+import { createS7Tags } from './tags/importFile';
 import { S7_Definition } from './connections/plc/s7/conn-params';
 
 const main = async (): Promise<void> => {
   //=== ================ Server 1 ==================
   let tagFile: string = 's7-tags-s1-p1.xlsx';
-  let readTags: S7_ReadTagDef[] = await createS7ReadTags(tagFile);
-  let writeTags: S7_WriteTagDef[] = await createS7WriteTags(tagFile);
-  const plc1: S7_Definition = new S7_Definition('10.0.0.15', 0, 1, readTags, writeTags);
+  let tags: S7_Tags = await createS7Tags(tagFile);
+  const plc1: S7_Definition = new S7_Definition('10.0.0.15', 0, 1, tags);
 
   tagFile = 's7-tags-s1-p2.xlsx';
-  readTags = await createS7ReadTags(tagFile);
-  writeTags = await createS7WriteTags(tagFile);
-  const plc2: S7_Definition = new S7_Definition('10.0.0.10', 0, 1, readTags, writeTags);
+  tags = await createS7Tags(tagFile);
+  const plc2: S7_Definition = new S7_Definition('10.0.0.10', 0, 1, tags);
 
   const mb_devices_1 = new MB_CreateConnections(mb_deviceDefinitions_1);
   const s7_plc_1 = new S7_CreateConnections({ plcDefinitions: [plc1.plc, plc2.plc] });

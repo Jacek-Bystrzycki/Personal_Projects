@@ -1,20 +1,13 @@
 import { S7_ConnectionParamType } from '../../../types/plc/s7/conn-param';
-import type { S7_ReadTagDef, S7_WriteTagDef } from '../../../types/plc/s7/format';
+import type { S7_Tags } from '../../../types/plc/s7/format';
 
 export const s7_triggetTime: number = 1000;
 //=======================================================
 export class S7_Definition {
   private _plc: S7_ConnectionParamType;
-  constructor(
-    private readonly ip: string,
-    private readonly rack: number,
-    private readonly slot: number,
-    private readonly readTags: S7_ReadTagDef[],
-    private readonly writeTags: S7_WriteTagDef[]
-  ) {
-    this._plc = [this.ip, this.rack, this.slot, this.readTags, this.writeTags];
+  constructor(private readonly ip: string, private readonly rack: number, private readonly slot: number, private readonly tags: S7_Tags) {
+    this._plc = [this.ip, this.rack, this.slot, this.tags.read, this.tags.write];
   }
-
   public get plc(): S7_ConnectionParamType {
     return this._plc;
   }
