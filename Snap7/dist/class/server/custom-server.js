@@ -18,6 +18,7 @@ class CustomServer extends standard_server_1.StandardServer {
                 this.s7_controller = new s7_1.S7_Controller(this);
                 this.s7_router.addMethod('GET', '/read/:id', this.s7_controller.read);
                 this.s7_router.addMethod('PUT', '/write/:id', this.s7_controller.write);
+                this.s7_router.addMethod('PUT', '/writesync/:id', this.s7_controller.writeSync);
                 this.app.use(conn_params_1.mainPaths.S7, this.s7_router.router);
             }
         };

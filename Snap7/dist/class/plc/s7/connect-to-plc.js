@@ -13,6 +13,7 @@ exports.S7_ConnectToPlc = void 0;
 const data_plc_1 = require("./data-plc");
 const conn_params_1 = require("../../../connections/plc/s7/conn-params");
 const errors_1 = require("../../../types/server/errors");
+const fixed_1 = require("set-interval-async/fixed");
 class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
     constructor(ip, rack, slot, readData, writeData) {
         super();
@@ -21,8 +22,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
         this.slot = slot;
         this.readData = readData;
         this.writeData = writeData;
-        this.lastErrorMsg = '';
-        this.isError = true;
+        this._isSyncBusy = false;
         this.s7_connectPlc = () => __awaiter(this, void 0, void 0, function* () {
             const promise = new Promise((resolve, reject) => {
                 this.s7client.Disconnect();
@@ -47,36 +47,83 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
             const readParams = this._readBuffer.map((param) => {
                 return param.params;
             });
-            setInterval(() => __awaiter(this, void 0, void 0, function* () {
+            (0, fixed_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
                 try {
                     yield this.s7_connectPlc();
-                    const data = yield this.s7_readFromPlc(readParams);
-                    data.forEach((result, index) => {
-                        this._readBuffer[index].data = result.Data;
-                    });
-                    const writeData = this._writeBuffer
-                        .filter((data) => data.execute)
-                        .map((data) => {
-                        return data.params;
-                    });
-                    if (writeData.length > 0) {
-                        yield this.s7_writeToPlc(writeData);
-                        this._writeBuffer.forEach((data) => (data.execute = false));
-                    }
-                    this.isError = false;
+                    readParams.forEach((param, index) => __awaiter(this, void 0, void 0, function* () {
+                        try {
+                            const data = yield this.s7_readFromPlc([param]);
+                            this._readBuffer[index].data = data[0].Data;
+                            this._readBuffer[index].isError = false;
+                            this._readBuffer[index].status = 'OK';
+                        }
+                        catch (error) {
+                            this._readBuffer[index].data = Buffer.from([0]);
+                            this._readBuffer[index].isError = true;
+                            if (error instanceof errors_1.CustomError) {
+                                this._readBuffer[index].status = error.message;
+                                this._writeBuffer[index].status = this._readBuffer[index].status;
+                            }
+                            else {
+                                this._readBuffer[index].status = 'Unknown error';
+                                this._writeBuffer[index].status = this._readBuffer[index].status;
+                            }
+                        }
+                    }));
                 }
                 catch (error) {
-                    if (error instanceof errors_1.CustomError)
-                        this.lastErrorMsg = error.message;
-                    this.isError = true;
+                    this._readBuffer.forEach((data, index) => {
+                        data.isError = true;
+                        data.data = Buffer.from([0]);
+                        if (error instanceof errors_1.CustomError) {
+                            data.status = error.message;
+                            this._writeBuffer[index].status = data.status;
+                        }
+                        else {
+                            data.status = 'Unknown error';
+                            this._writeBuffer[index].status = data.status;
+                        }
+                    });
+                }
+                try {
+                    const writeData = this._writeBuffer
+                        .map((data, index) => {
+                        return { data: data.params, index, execute: data.execute };
+                    })
+                        .filter((data) => data.execute);
+                    writeData.forEach((data) => __awaiter(this, void 0, void 0, function* () {
+                        if (!this._readBuffer[data.index].isError) {
+                            yield this.s7_writeToPlc([data.data]);
+                            this._writeBuffer[data.index].execute = false;
+                            this._writeBuffer[data.index].isError = false;
+                            this._writeBuffer[data.index].status = 'Done';
+                        }
+                        else {
+                            this._writeBuffer[data.index].execute = false;
+                            this._writeBuffer[data.index].isError = true;
+                        }
+                    }));
+                }
+                catch (error) {
+                    this._writeBuffer.forEach((data) => {
+                        data.isError = true;
+                        data.execute = false;
+                        if (error instanceof errors_1.CustomError)
+                            data.status = error.message;
+                        else
+                            data.status = 'Unknown error';
+                    });
+                }
+                finally {
+                    this._isSyncBusy = false;
                 }
             }), conn_params_1.s7_triggetTime);
         };
-        this._readBuffer = readData.map((params) => {
-            return { params, data: Buffer.from('0') };
+        this._readBuffer = readData.map((def) => {
+            return { params: def.params, format: def.format, data: Buffer.from([0]), isError: true, status: 'Init Error' };
         });
-        this._writeBuffer = writeData.map((params) => {
-            return { params, execute: false };
+        this._writeBuffer = writeData.map((def) => {
+            return { params: def.params, format: def.format, execute: false, isError: false, status: 'No write command triggered yet' };
         });
         this.loop();
     }
@@ -91,6 +138,12 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
     }
     set writeBuffer(data) {
         this._writeBuffer = data;
+    }
+    set isSyncBusy(data) {
+        this._isSyncBusy = data;
+    }
+    get isSyncBusy() {
+        return this._isSyncBusy;
     }
 }
 exports.S7_ConnectToPlc = S7_ConnectToPlc;

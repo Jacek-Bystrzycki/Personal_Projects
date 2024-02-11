@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MB_CreateConnections = void 0;
 const connect_to_devide_1 = require("./connect-to-devide");
@@ -23,22 +14,36 @@ class MB_CreateConnections {
                 return { id: index + 1, instance };
             });
         };
-        this.mb_ReadFromDevice = (id, regs) => __awaiter(this, void 0, void 0, function* () {
-            const instanceToRead = this._instances.find((item) => {
-                return item.id === id;
-            });
-            if (!instanceToRead)
+        this.mb_readFromDevice = (id, indexes) => {
+            const dataIndex = this._instances.findIndex((item) => item.id === id);
+            if (dataIndex === -1)
                 throw new errors_1.BadRequestError(`Instance ${id} not exists`);
-            return instanceToRead.instance.mb_ReadRegisters(regs);
-        });
-        this.mb_WriteToDevice = (id, start, data) => __awaiter(this, void 0, void 0, function* () {
-            const instanceToWrite = this._instances.find((item) => {
-                return item.id === id;
+            if (!indexes.every((index) => typeof this._instances[dataIndex].instance.readBuffer[index - 1] !== 'undefined')) {
+                throw new errors_1.BadRequestError(`Not all indexes [${indexes}] exist in params definitions`);
+            }
+            if (!this._instances[dataIndex].instance.isConnected)
+                throw new errors_1.InternalError(this._instances[dataIndex].instance.lastErrorMsg);
+            const data = [];
+            indexes.forEach((index) => {
+                data.push(this._instances[dataIndex].instance.readBuffer[index - 1].data);
             });
-            if (!instanceToWrite)
+            return data;
+        };
+        this.mb_writeToDevice = (id, indexes, dataToWrite) => {
+            const dataIndex = this._instances.findIndex((item) => item.id === id);
+            if (dataIndex === -1)
                 throw new errors_1.BadRequestError(`Instance ${id} not exists`);
-            return instanceToWrite.instance.mb_WriteRegisters(start, data);
-        });
+            if (!this._instances[dataIndex].instance.isConnected)
+                throw new errors_1.InternalError(this._instances[dataIndex].instance.lastErrorMsg);
+            if (indexes.length !== dataToWrite.length)
+                throw new errors_1.BadRequestError('Wrong amount of data');
+            if (!indexes.every((index) => typeof this._instances[dataIndex].instance.writeBuffer[index - 1] !== 'undefined'))
+                throw new errors_1.BadRequestError(`Not all indexes [${indexes}] exist in params definitions`);
+            indexes.forEach((index, i) => {
+                this._instances[dataIndex].instance.writeBuffer[index - 1].params.data = dataToWrite[i];
+                this._instances[dataIndex].instance.writeBuffer[index - 1].execute = true;
+            });
+        };
         this._instances = this.createConnections();
     }
     get instances() {

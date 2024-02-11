@@ -2,6 +2,7 @@ import { S7_ConnectToPlc } from './connect-to-plc';
 import { S7_PLCInstance } from '../../../types/plc/s7/plc-instance';
 import { S7_CreateConnectionsParams } from '../../../types/plc/s7/conn-param';
 import { BadRequestError, InternalError } from '../../../types/server/errors';
+import { waitUntil } from '../../../utils/waitUntil';
 
 export class S7_CreateConnections {
   private _instances: S7_PLCInstance[];
@@ -47,6 +48,19 @@ export class S7_CreateConnections {
         throw new InternalError(this._instances[dataIndex].instance.writeBuffer[index - 1].status);
       this._instances[dataIndex].instance.writeBuffer[index - 1].params.Data = dataToWrite[i];
     });
+  };
+
+  public s7_writeDataSync = async (id: number, indexes: number[], dataToWrite: Buffer[]): Promise<void> => {
+    const dataIndex: number = this._instances.findIndex((instance) => instance.id === id);
+
+    indexes.forEach((index, i) => {
+      this._instances[dataIndex].instance.writeBuffer[index - 1].execute = true;
+      if (this._instances[dataIndex].instance.readBuffer[index - 1].isError)
+        throw new InternalError(this._instances[dataIndex].instance.writeBuffer[index - 1].status);
+      this._instances[dataIndex].instance.writeBuffer[index - 1].params.Data = dataToWrite[i];
+    });
+    this._instances[dataIndex].instance.isSyncBusy = true;
+    await waitUntil(() => !this._instances[dataIndex].instance.isSyncBusy);
   };
 
   public get instances(): S7_PLCInstance[] {

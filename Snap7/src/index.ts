@@ -19,7 +19,7 @@ const main = async (): Promise<void> => {
   const plc2: S7_Definition = new S7_Definition('10.0.0.10', 0, 1, tags);
 
   const mb_devices_1 = new MB_CreateConnections(mb_deviceDefinitions_1);
-  const s7_plc_1 = new S7_CreateConnections({ plcDefinitions: [plc1.plc, plc2.plc] });
+  const s7_plc_1 = new S7_CreateConnections({ plcDefinitions: [plc2.plc] });
   const server1 = new CustomServer(port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1 });
   //=== ================ Server 2 ==================
   // tagFile = 's7-tags-s2-p2.xlsx';

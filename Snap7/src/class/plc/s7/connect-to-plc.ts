@@ -1,14 +1,16 @@
 import snap7 = require('node-snap7');
 import { S7_DataPLC } from './data-plc';
 import { s7_triggetTime } from '../../../connections/plc/s7/conn-params';
-import { CustomError } from '../../../types/server/errors';
+import { CustomError, InternalError } from '../../../types/server/errors';
 import { S7_ReadBuffer, S7_WriteBuffer } from '../../../types/plc/s7/buffers';
 import { setIntervalAsync } from 'set-interval-async/fixed';
 import type { S7_ReadTagDef, S7_WriteTagDef } from '../../../types/plc/s7/format';
+import { waitUntil } from '../../../utils/waitUntil';
 
 export class S7_ConnectToPlc extends S7_DataPLC {
   private _readBuffer: S7_ReadBuffer[];
   private _writeBuffer: S7_WriteBuffer[];
+  private _isSyncBusy: boolean = false;
   constructor(
     public readonly ip: string,
     public readonly rack: number,
@@ -113,6 +115,8 @@ export class S7_ConnectToPlc extends S7_DataPLC {
           if (error instanceof CustomError) data.status = error.message;
           else data.status = 'Unknown error';
         });
+      } finally {
+        this._isSyncBusy = false;
       }
     }, s7_triggetTime);
   };
@@ -131,5 +135,13 @@ export class S7_ConnectToPlc extends S7_DataPLC {
 
   public set writeBuffer(data: S7_WriteBuffer[]) {
     this._writeBuffer = data;
+  }
+
+  public set isSyncBusy(data: boolean) {
+    this._isSyncBusy = data;
+  }
+
+  public get isSyncBusy(): boolean {
+    return this._isSyncBusy;
   }
 }

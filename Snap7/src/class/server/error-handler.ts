@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { getDateAsString } from '../../utils/get-date-as-string';
 
 export const notFound = (req: Request, res: Response, next: NextFunction) => {
-  next(new NotFoundError(`Resource not found on Server: ${req.port}`));
+  next(new NotFoundError(`Resource not found on Server port: ${req.port}`));
 };
 
 export class ErrorHandler {
