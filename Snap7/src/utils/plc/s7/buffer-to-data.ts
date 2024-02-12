@@ -124,7 +124,7 @@ export const bufferRealToFloat = (data: Buffer): number[] => {
   const floatAmount: number = data.length / 4;
   for (let i = 0; i < floatAmount; i++) {
     const buf = Buffer.copyBytesFrom(data, i * 4, 4);
-    float.push(parseFloat(buf.readFloatBE(0).toFixed(2)));
+    float.push(parseFloat(buf.readFloatBE(0).toFixed(5)));
   }
   return float;
 };

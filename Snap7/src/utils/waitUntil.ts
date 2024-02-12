@@ -1,15 +1,21 @@
-export const waitUntil = async (condition: Function, checkInterval = 100): Promise<void> => {
-  const promise = new Promise<void>((resolve) => {
+import { s7_triggetTime } from '../connections/plc/s7/conn-params';
+
+export const waitUntil = async (res: Function, rej: Function, errorMsg: Function, checkInterval = 100): Promise<void> => {
+  const promise = new Promise<void>((resolve, reject) => {
     let interval = setInterval(() => {
-      if (!condition()) return;
+      if (!res() && !rej()) return;
       clearInterval(interval);
-      resolve();
+      if (res()) {
+        resolve();
+      } else {
+        reject(errorMsg());
+      }
     }, checkInterval);
   });
   const timeout = new Promise<never>((_, reject) => {
     setTimeout(() => {
-      reject();
-    }, 3000);
+      reject('Timeout');
+    }, s7_triggetTime * 5);
   });
   return Promise.race([promise, timeout]);
 };

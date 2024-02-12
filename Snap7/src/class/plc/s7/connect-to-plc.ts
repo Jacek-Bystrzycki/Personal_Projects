@@ -1,16 +1,19 @@
 import snap7 = require('node-snap7');
 import { S7_DataPLC } from './data-plc';
 import { s7_triggetTime } from '../../../connections/plc/s7/conn-params';
-import { CustomError, InternalError } from '../../../types/server/errors';
+import { CustomError } from '../../../types/server/errors';
 import { S7_ReadBuffer, S7_WriteBuffer } from '../../../types/plc/s7/buffers';
 import { setIntervalAsync } from 'set-interval-async/fixed';
 import type { S7_ReadTagDef, S7_WriteTagDef } from '../../../types/plc/s7/format';
-import { waitUntil } from '../../../utils/waitUntil';
+import { SyncQuery } from '../../../types/plc/s7/syncQuery';
 
 export class S7_ConnectToPlc extends S7_DataPLC {
   private _readBuffer: S7_ReadBuffer[];
   private _writeBuffer: S7_WriteBuffer[];
-  private _isSyncBusy: boolean = false;
+  private _readBufferConsistent: S7_ReadBuffer[];
+  private _writeBufferConsistent: S7_WriteBuffer[];
+  private _writeBufferSync: S7_WriteBuffer[];
+  private _syncQueue: SyncQuery[] = [];
   constructor(
     public readonly ip: string,
     public readonly rack: number,
@@ -25,6 +28,9 @@ export class S7_ConnectToPlc extends S7_DataPLC {
     this._writeBuffer = writeData.map((def) => {
       return { params: def.params, format: def.format, execute: false, isError: false, status: 'No write command triggered yet' };
     });
+    this._readBufferConsistent = this._readBuffer;
+    this._writeBufferConsistent = this._writeBuffer;
+    this._writeBufferSync = this._writeBuffer;
     this.loop();
   }
 
@@ -55,6 +61,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
     setIntervalAsync(async () => {
       try {
         await this.s7_connectPlc();
+        //============================ READ ASYNC ===================
         readParams.forEach(async (param, index) => {
           try {
             const data: snap7.MultiVarsReadResult[] = await this.s7_readFromPlc([param]);
@@ -86,6 +93,8 @@ export class S7_ConnectToPlc extends S7_DataPLC {
           }
         });
       }
+      this._readBufferConsistent = this._readBuffer;
+      //============================ WRITE ASYNC ===================
       try {
         type WtiteData = {
           data: snap7.MultiVarWrite;
@@ -101,47 +110,69 @@ export class S7_ConnectToPlc extends S7_DataPLC {
           if (!this._readBuffer[data.index].isError) {
             await this.s7_writeToPlc([data.data]);
             this._writeBuffer[data.index].execute = false;
+            this._writeBufferConsistent[data.index].execute = false;
             this._writeBuffer[data.index].isError = false;
             this._writeBuffer[data.index].status = 'Done';
           } else {
             this._writeBuffer[data.index].execute = false;
+            this._writeBufferConsistent[data.index].execute = false;
             this._writeBuffer[data.index].isError = true;
           }
         });
       } catch (error) {
-        this._writeBuffer.forEach((data) => {
+        this._writeBuffer.forEach((data, index) => {
           data.isError = true;
           data.execute = false;
+          this._writeBufferConsistent[index].execute = false;
           if (error instanceof CustomError) data.status = error.message;
           else data.status = 'Unknown error';
         });
-      } finally {
-        this._isSyncBusy = false;
+        this._writeBuffer = this._writeBuffer.map((data, index) => {
+          const params: snap7.MultiVarWrite = { ...data.params, Data: this._writeBufferConsistent[index].params.Data };
+          return { ...data, execute: this._writeBufferConsistent[index].execute, params };
+        });
       }
+      //============================ WRITE SYNC ===================
+      this._syncQueue.forEach(async (query) => {
+        if (!query.isDone) {
+          const dataToWrite: snap7.MultiVarWrite[] = query.indexes.map((index, i) => {
+            return { ...this._writeBufferSync[index - 1].params, Data: query.data[i] };
+          });
+          try {
+            await this.s7_writeToPlc(dataToWrite);
+            query.isDone = true;
+          } catch (error) {
+            query.isError = true;
+            if (error instanceof CustomError) {
+              query.errorMsg = error.message;
+            } else query.errorMsg = 'Unknown Error during writing';
+          }
+        }
+      });
     }, s7_triggetTime);
   };
 
-  public get readBuffer(): S7_ReadBuffer[] {
-    return this._readBuffer;
+  public addToSyncQueue = (data: SyncQuery): void => {
+    this._syncQueue.push(data);
+  };
+
+  public removeFromSyncQueue = (id: string): void => {
+    this._syncQueue = this._syncQueue.filter((query) => query.queryId !== id);
+  };
+
+  public get readBufferConsistent(): S7_ReadBuffer[] {
+    return this._readBufferConsistent;
   }
 
-  public set readBuffer(data: S7_ReadBuffer[]) {
-    this._readBuffer = data;
+  public get writeBufferConsistent(): S7_WriteBuffer[] {
+    return this._writeBufferConsistent;
   }
 
-  public get writeBuffer(): S7_WriteBuffer[] {
-    return this._writeBuffer;
+  public set writeBufferConsistent(data: S7_WriteBuffer[]) {
+    this._writeBufferConsistent = data;
   }
 
-  public set writeBuffer(data: S7_WriteBuffer[]) {
-    this._writeBuffer = data;
-  }
-
-  public set isSyncBusy(data: boolean) {
-    this._isSyncBusy = data;
-  }
-
-  public get isSyncBusy(): boolean {
-    return this._isSyncBusy;
+  public get syncQueue(): SyncQuery[] {
+    return this._syncQueue;
   }
 }

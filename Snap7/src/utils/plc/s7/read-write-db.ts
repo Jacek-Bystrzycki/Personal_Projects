@@ -8,7 +8,7 @@ export const s7_readAreas = async (s7client: snap7.S7Client, multiVar: snap7.Mul
     s7client.ReadMultiVars(multiVar, (err, data) => {
       if (!err && data.every((result) => result.Result === 0)) resolve(data);
       const errorDataDBValues = JSON.stringify(getObjectValue(multiVar, 'DBNumber'));
-      reject(new CustomError(`Cannot read data from DBs:${errorDataDBValues}`));
+      reject(new CustomError(`Cannot read-write data from-to DBs:${errorDataDBValues}`));
     });
   });
   const timeout = new Promise<never>((_, reject) => {
