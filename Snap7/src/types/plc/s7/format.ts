@@ -19,11 +19,13 @@ export type S7_Format = (typeof s7_format)[number];
 export type S7_ReadTagDef = {
   params: snap7.MultiVarRead;
   format: S7_Format;
+  id: number;
 };
 
 export type S7_WriteTagDef = {
   params: snap7.MultiVarWrite;
   format: S7_Format;
+  id: number;
 };
 
 export type S7_Tags = {

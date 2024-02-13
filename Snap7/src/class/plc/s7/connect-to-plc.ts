@@ -2,17 +2,17 @@ import snap7 = require('node-snap7');
 import { S7_DataPLC } from './data-plc';
 import { s7_triggetTime } from '../../../connections/plc/s7/conn-params';
 import { CustomError } from '../../../types/server/errors';
-import { S7_ReadBuffer, S7_WriteBuffer } from '../../../types/plc/s7/buffers';
+import { S7_ReadTag, S7_WriteTag } from '../../../types/plc/s7/tags';
 import { setIntervalAsync } from 'set-interval-async/fixed';
 import type { S7_ReadTagDef, S7_WriteTagDef } from '../../../types/plc/s7/format';
 import { SyncQuery } from '../../../types/plc/s7/syncQuery';
 
 export class S7_ConnectToPlc extends S7_DataPLC {
-  private _readBuffer: S7_ReadBuffer[];
-  private _writeBuffer: S7_WriteBuffer[];
-  private _readBufferConsistent: S7_ReadBuffer[];
-  private _writeBufferConsistent: S7_WriteBuffer[];
-  private _writeBufferSync: S7_WriteBuffer[];
+  private _readBuffer: S7_ReadTag[];
+  private _writeBuffer: S7_WriteTag[];
+  private _readBufferConsistent: S7_ReadTag[];
+  private _writeBufferConsistent: S7_WriteTag[];
+  private _writeBufferSync: S7_WriteTag[];
   private _syncQueue: SyncQuery[] = [];
   constructor(
     public readonly ip: string,
@@ -23,10 +23,10 @@ export class S7_ConnectToPlc extends S7_DataPLC {
   ) {
     super();
     this._readBuffer = readData.map((def) => {
-      return { params: def.params, format: def.format, data: Buffer.from([]), isError: true, status: 'Init Error' };
+      return { params: def.params, format: def.format, data: Buffer.from([]), isError: true, status: 'Init Error', id: def.id };
     });
     this._writeBuffer = writeData.map((def) => {
-      return { params: def.params, format: def.format, execute: false, isError: false, status: 'No write command triggered yet' };
+      return { params: def.params, format: def.format, execute: false, isError: false, status: 'No write command triggered yet', id: def.id };
     });
     this._readBufferConsistent = this._readBuffer;
     this._writeBufferConsistent = this._writeBuffer;
@@ -160,15 +160,15 @@ export class S7_ConnectToPlc extends S7_DataPLC {
     this._syncQueue = this._syncQueue.filter((query) => query.queryId !== id);
   };
 
-  public get readBufferConsistent(): S7_ReadBuffer[] {
+  public get readBufferConsistent(): S7_ReadTag[] {
     return this._readBufferConsistent;
   }
 
-  public get writeBufferConsistent(): S7_WriteBuffer[] {
+  public get writeBufferConsistent(): S7_WriteTag[] {
     return this._writeBufferConsistent;
   }
 
-  public set writeBufferConsistent(data: S7_WriteBuffer[]) {
+  public set writeBufferConsistent(data: S7_WriteTag[]) {
     this._writeBufferConsistent = data;
   }
 

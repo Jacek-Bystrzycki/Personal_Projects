@@ -1,9 +1,9 @@
-import type { S7_ReadBuffer } from './buffers';
+import type { S7_ReadTag } from './tags';
 
-export type BeforeFormat = Pick<S7_ReadBuffer, 'isError' | 'status' | 'data'>;
+export type BeforeFormat = Pick<S7_ReadTag, 'isError' | 'status' | 'data' | 'id'>;
 
 export type DataResponse = {
   values: number[] | number[][];
 };
 
-export type AfterFormat = Pick<S7_ReadBuffer, 'isError' | 'status'> & DataResponse;
+export type AfterFormat = Pick<S7_ReadTag, 'isError' | 'status' | 'id'> & DataResponse;

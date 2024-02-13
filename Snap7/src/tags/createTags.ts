@@ -61,7 +61,7 @@ const createS7ReadTags = async (file: string): Promise<S7_ReadTagDef[]> => {
     else break;
   }
 
-  const tags: S7_ReadTagDef[] = noEmptyRows.map((row): S7_ReadTagDef => {
+  const tags: S7_ReadTagDef[] = noEmptyRows.map((row, index): S7_ReadTagDef => {
     const amount: number = parseInt(getCellValue(row, 7), 10);
     if (amount < 1) throw new Error('Wrong Amount');
     return {
@@ -73,6 +73,7 @@ const createS7ReadTags = async (file: string): Promise<S7_ReadTagDef[]> => {
         Amount: getS7WordLen(getCellValue(row, 3)) === snap7.WordLen.S7WLBit ? 1 : amount,
       },
       format: getS7Format(getCellValue(row, 6)),
+      id: index + 1,
     };
   });
   return tags;
@@ -99,7 +100,7 @@ const createS7WriteTags = async (file: string): Promise<S7_WriteTagDef[]> => {
     else break;
   }
 
-  const tags: S7_WriteTagDef[] = noEmptyRows.map((row): S7_WriteTagDef => {
+  const tags: S7_WriteTagDef[] = noEmptyRows.map((row, index): S7_WriteTagDef => {
     const amount: number = parseInt(getCellValue(row, 7), 10);
     if (amount < 1) throw new Error('Wrong Amount');
     return {
@@ -112,6 +113,7 @@ const createS7WriteTags = async (file: string): Promise<S7_WriteTagDef[]> => {
         Data: Buffer.from([]),
       },
       format: getS7Format(getCellValue(row, 6)),
+      id: index + 1,
     };
   });
   return tags;

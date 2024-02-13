@@ -32,6 +32,7 @@ export class S7_CreateConnections {
         isError: this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError,
         status: this._instances[dataIndex].instance.readBufferConsistent[index - 1].status,
         data: this._instances[dataIndex].instance.readBufferConsistent[index - 1].data,
+        id: this._instances[dataIndex].instance.readBufferConsistent[index - 1].id,
       };
       resp.push(data);
     });
