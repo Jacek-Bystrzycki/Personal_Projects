@@ -4,6 +4,7 @@ import { getDateAsString } from '../../../utils/get-date-as-string';
 import { BadRequestError } from '../../../types/server/errors';
 import { CustomServer } from '../custom-server';
 import snap7 = require('node-snap7');
+import type { BeforeFormat, AfterFormat, DataResponse } from '../../../types/plc/s7/respose';
 import {
   bufferByteToBitArray,
   bufferWordToBitArray,
@@ -50,8 +51,8 @@ export class S7_Controller {
         if (!this.instance.devices.s7_definitions?.instances[numId - 1].instance.writeBufferConsistent[index - 1])
           throw new BadRequestError(`Not all tags [${index}] exist in params definitions`);
       });
-      const resp = this.instance.devices.s7_definitions?.s7_readData(numId, indexesNumber);
-      const data = readData(this.instance, resp, numId, indexesNumber);
+      const resp: BeforeFormat[] = this.instance.devices.s7_definitions?.s7_readData(numId, indexesNumber);
+      const data: AfterFormat[] = readData(this.instance, resp, numId, indexesNumber);
       res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, data });
     } catch (error) {
       next(error);
@@ -89,9 +90,9 @@ export class S7_Controller {
 
 //=============================================================================
 
-const readData = (context: CustomServer, resp: Buffer[] | undefined, numId: number, indexesNumber: number[]): Array<number | Array<number | Array<number>>> => {
+const readData = (context: CustomServer, resp: BeforeFormat[] | undefined, numId: number, indexesNumber: number[]): AfterFormat[] => {
   if (resp) {
-    const data: Array<number | Array<number | Array<number>>> = [];
+    const data: DataResponse[] = [];
     const types = indexesNumber.map((index) => {
       return context.devices.s7_definitions?.instances[numId - 1].instance.readBufferConsistent[index - 1].params.WordLen;
     });
@@ -102,55 +103,66 @@ const readData = (context: CustomServer, resp: Buffer[] | undefined, numId: numb
       switch (type) {
         case snap7.WordLen.S7WLBit:
           if (formats[index] === 'Bit') {
-            data.push([...resp[index]]);
+            const singleData: DataResponse = { values: [...resp[index].data] };
+            data.push(singleData);
             break;
           }
           throw new BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
         case snap7.WordLen.S7WLByte:
           if (formats[index] === 'Byte_As_BitArray') {
-            data.push(bufferByteToBitArray(resp[index]));
+            const singleData: DataResponse = { values: bufferByteToBitArray(resp[index].data) };
+            data.push(singleData);
             break;
           }
           if (formats[index] === 'Byte_As_Int') {
-            data.push(bufferByteToInt(resp[index]));
+            const singleData: DataResponse = { values: bufferByteToInt(resp[index].data) };
+            data.push(singleData);
             break;
           }
           if (formats[index] === 'Byte_As_Uint') {
-            data.push(bufferByteToUInt(resp[index]));
+            const singleData: DataResponse = { values: bufferByteToUInt(resp[index].data) };
+            data.push(singleData);
             break;
           }
           throw new BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
         case snap7.WordLen.S7WLWord:
           if (formats[index] === 'Word_As_BitArray') {
-            data.push(bufferWordToBitArray(resp[index]));
+            const singleData: DataResponse = { values: bufferWordToBitArray(resp[index].data) };
+            data.push(singleData);
             break;
           }
           if (formats[index] === 'Word_As_Int') {
-            data.push(bufferWordToInt(resp[index]));
+            const singleData: DataResponse = { values: bufferWordToInt(resp[index].data) };
+            data.push(singleData);
             break;
           }
           if (formats[index] === 'Word_As_Uint') {
-            data.push(bufferWordToUInt(resp[index]));
+            const singleData: DataResponse = { values: bufferWordToUInt(resp[index].data) };
+            data.push(singleData);
             break;
           }
           throw new BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
         case snap7.WordLen.S7WLDWord:
           if (formats[index] === 'Dword_As_BitArray') {
-            data.push(bufferDWordToBitArray(resp[index]));
+            const singleData: DataResponse = { values: bufferDWordToBitArray(resp[index].data) };
+            data.push(singleData);
             break;
           }
           if (formats[index] === 'Dword_As_Int') {
-            data.push(bufferDwordToInt(resp[index]));
+            const singleData: DataResponse = { values: bufferDwordToInt(resp[index].data) };
+            data.push(singleData);
             break;
           }
           if (formats[index] === 'Dword_As_Uint') {
-            data.push(bufferDwordToUInt(resp[index]));
+            const singleData: DataResponse = { values: bufferDwordToUInt(resp[index].data) };
+            data.push(singleData);
             break;
           }
           throw new BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
         case snap7.WordLen.S7WLReal:
           if (formats[index] === 'Real') {
-            data.push(bufferRealToFloat(resp[index]));
+            const singleData: DataResponse = { values: bufferRealToFloat(resp[index].data) };
+            data.push(singleData);
             break;
           }
           throw new BadRequestError(`Tag No: ${index + 1} cannot be formatted as ${formats[index]}`);
@@ -158,7 +170,15 @@ const readData = (context: CustomServer, resp: Buffer[] | undefined, numId: numb
           throw new BadRequestError('Unsupported data type');
       }
     });
-    return data;
+
+    const dataResponse: AfterFormat[] = data.map((singleData, index): AfterFormat => {
+      return {
+        isError: resp[index].isError,
+        status: resp[index].status,
+        values: singleData.values,
+      };
+    });
+    return dataResponse;
   } else throw new BadRequestError('Empty data');
 };
 

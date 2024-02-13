@@ -26,7 +26,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     tags = yield (0, importFile_1.createS7Tags)(tagFile);
     const plc2 = new conn_params_3.S7_Definition('10.0.0.10', 0, 1, tags);
     const mb_devices_1 = new create_mb_connection_1.MB_CreateConnections(conn_params_1.mb_deviceDefinitions_1);
-    const s7_plc_1 = new create_plc_connections_1.S7_CreateConnections({ plcDefinitions: [plc2.plc] });
+    const s7_plc_1 = new create_plc_connections_1.S7_CreateConnections({ plcDefinitions: [plc1.plc, plc2.plc] });
     const server1 = new custom_server_1.CustomServer(conn_params_2.port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1 });
     //=== ================ Server 2 ==================
     // tagFile = 's7-tags-s2-p2.xlsx';

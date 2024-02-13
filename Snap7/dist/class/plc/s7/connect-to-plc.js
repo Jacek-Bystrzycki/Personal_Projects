@@ -22,7 +22,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
         this.slot = slot;
         this.readData = readData;
         this.writeData = writeData;
-        this._isSyncBusy = false;
+        this._syncQueue = [];
         this.s7_connectPlc = () => __awaiter(this, void 0, void 0, function* () {
             const promise = new Promise((resolve, reject) => {
                 this.s7client.Disconnect();
@@ -50,6 +50,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
             (0, fixed_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
                 try {
                     yield this.s7_connectPlc();
+                    //============================ READ ASYNC ===================
                     readParams.forEach((param, index) => __awaiter(this, void 0, void 0, function* () {
                         try {
                             const data = yield this.s7_readFromPlc([param]);
@@ -85,6 +86,8 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                         }
                     });
                 }
+                this._readBufferConsistent = this._readBuffer;
+                //============================ WRITE ASYNC ===================
                 try {
                     const writeData = this._writeBuffer
                         .map((data, index) => {
@@ -95,29 +98,60 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                         if (!this._readBuffer[data.index].isError) {
                             yield this.s7_writeToPlc([data.data]);
                             this._writeBuffer[data.index].execute = false;
+                            this._writeBufferConsistent[data.index].execute = false;
                             this._writeBuffer[data.index].isError = false;
                             this._writeBuffer[data.index].status = 'Done';
                         }
                         else {
                             this._writeBuffer[data.index].execute = false;
+                            this._writeBufferConsistent[data.index].execute = false;
                             this._writeBuffer[data.index].isError = true;
                         }
                     }));
                 }
                 catch (error) {
-                    this._writeBuffer.forEach((data) => {
+                    this._writeBuffer.forEach((data, index) => {
                         data.isError = true;
                         data.execute = false;
+                        this._writeBufferConsistent[index].execute = false;
                         if (error instanceof errors_1.CustomError)
                             data.status = error.message;
                         else
                             data.status = 'Unknown error';
                     });
+                    this._writeBuffer = this._writeBuffer.map((data, index) => {
+                        const params = Object.assign(Object.assign({}, data.params), { Data: this._writeBufferConsistent[index].params.Data });
+                        return Object.assign(Object.assign({}, data), { execute: this._writeBufferConsistent[index].execute, params });
+                    });
                 }
-                finally {
-                    this._isSyncBusy = false;
-                }
+                //============================ WRITE SYNC ===================
+                this._syncQueue.forEach((query) => __awaiter(this, void 0, void 0, function* () {
+                    if (!query.isDone) {
+                        const dataToWrite = query.indexes.map((index, i) => {
+                            return Object.assign(Object.assign({}, this._writeBufferSync[index - 1].params), { Data: query.data[i] });
+                        });
+                        try {
+                            yield this.s7_writeToPlc(dataToWrite);
+                            query.isDone = true;
+                        }
+                        catch (error) {
+                            query.isError = true;
+                            if (error instanceof errors_1.CustomError) {
+                                query.errorMsg = error.message;
+                            }
+                            else
+                                query.errorMsg = 'Unknown Error during writing';
+                        }
+                    }
+                }));
+                console.log(this._readBuffer);
             }), conn_params_1.s7_triggetTime);
+        };
+        this.addToSyncQueue = (data) => {
+            this._syncQueue.push(data);
+        };
+        this.removeFromSyncQueue = (id) => {
+            this._syncQueue = this._syncQueue.filter((query) => query.queryId !== id);
         };
         this._readBuffer = readData.map((def) => {
             return { params: def.params, format: def.format, data: Buffer.from([0]), isError: true, status: 'Init Error' };
@@ -125,25 +159,22 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
         this._writeBuffer = writeData.map((def) => {
             return { params: def.params, format: def.format, execute: false, isError: false, status: 'No write command triggered yet' };
         });
+        this._readBufferConsistent = this._readBuffer;
+        this._writeBufferConsistent = this._writeBuffer;
+        this._writeBufferSync = this._writeBuffer;
         this.loop();
     }
-    get readBuffer() {
-        return this._readBuffer;
+    get readBufferConsistent() {
+        return this._readBufferConsistent;
     }
-    set readBuffer(data) {
-        this._readBuffer = data;
+    get writeBufferConsistent() {
+        return this._writeBufferConsistent;
     }
-    get writeBuffer() {
-        return this._writeBuffer;
+    set writeBufferConsistent(data) {
+        this._writeBufferConsistent = data;
     }
-    set writeBuffer(data) {
-        this._writeBuffer = data;
-    }
-    set isSyncBusy(data) {
-        this._isSyncBusy = data;
-    }
-    get isSyncBusy() {
-        return this._isSyncBusy;
+    get syncQueue() {
+        return this._syncQueue;
     }
 }
 exports.S7_ConnectToPlc = S7_ConnectToPlc;

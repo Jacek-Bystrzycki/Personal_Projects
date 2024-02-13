@@ -1,7 +1,8 @@
 import { S7_ConnectToPlc } from './connect-to-plc';
 import { S7_PLCInstance } from '../../../types/plc/s7/plc-instance';
 import { S7_CreateConnectionsParams } from '../../../types/plc/s7/conn-param';
-import { BadRequestError, InternalError } from '../../../types/server/errors';
+import { InternalError } from '../../../types/server/errors';
+import { BeforeFormat } from '../../../types/plc/s7/respose';
 import { waitUntil } from '../../../utils/waitUntil';
 import { nanoid } from 'nanoid';
 import { SyncQuery } from '../../../types/plc/s7/syncQuery';
@@ -21,19 +22,21 @@ export class S7_CreateConnections {
     });
   };
 
-  public s7_readData = (id: number, indexes: number[]): Buffer[] => {
+  public s7_readData = (id: number, indexes: number[]): BeforeFormat[] => {
     const dataIndex: number = this._instances.findIndex((instance) => instance.id === id);
 
-    const data: Buffer[] = [];
+    const resp: BeforeFormat[] = [];
+
     indexes.forEach((index) => {
-      if (this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError)
-        throw new InternalError(this._instances[dataIndex].instance.readBufferConsistent[index - 1].status);
-      data.push(this._instances[dataIndex].instance.readBufferConsistent[index - 1].data);
+      const data: BeforeFormat = {
+        isError: this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError,
+        status: this._instances[dataIndex].instance.readBufferConsistent[index - 1].status,
+        data: this._instances[dataIndex].instance.readBufferConsistent[index - 1].data,
+      };
+      resp.push(data);
     });
 
-    if (data.length < 1) throw new InternalError('Empty data');
-
-    return data;
+    return resp;
   };
 
   public s7_writeData = (id: number, indexes: number[], dataToWrite: Buffer[]): void => {

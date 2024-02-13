@@ -109,7 +109,7 @@ const createS7WriteTags = async (file: string): Promise<S7_WriteTagDef[]> => {
         DBNumber: parseInt(getCellValue(row, 4), 10),
         Start: parseInt(getCellValue(row, 5), 10),
         Amount: getS7WordLen(getCellValue(row, 3)) === snap7.WordLen.S7WLBit ? 1 : amount,
-        Data: Buffer.from([0]),
+        Data: Buffer.from([]),
       },
       format: getS7Format(getCellValue(row, 6)),
     };

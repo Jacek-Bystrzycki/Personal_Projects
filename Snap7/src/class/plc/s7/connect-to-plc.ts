@@ -23,7 +23,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
   ) {
     super();
     this._readBuffer = readData.map((def) => {
-      return { params: def.params, format: def.format, data: Buffer.from([0]), isError: true, status: 'Init Error' };
+      return { params: def.params, format: def.format, data: Buffer.from([]), isError: true, status: 'Init Error' };
     });
     this._writeBuffer = writeData.map((def) => {
       return { params: def.params, format: def.format, execute: false, isError: false, status: 'No write command triggered yet' };
@@ -69,7 +69,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
             this._readBuffer[index].isError = false;
             this._readBuffer[index].status = 'OK';
           } catch (error) {
-            this._readBuffer[index].data = Buffer.from([0]);
+            this._readBuffer[index].data = Buffer.from([]);
             this._readBuffer[index].isError = true;
             if (error instanceof CustomError) {
               this._readBuffer[index].status = error.message;
@@ -83,7 +83,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
       } catch (error) {
         this._readBuffer.forEach((data, index) => {
           data.isError = true;
-          data.data = Buffer.from([0]);
+          data.data = Buffer.from([]);
           if (error instanceof CustomError) {
             data.status = error.message;
             this._writeBuffer[index].status = data.status;

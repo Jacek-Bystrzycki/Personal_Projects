@@ -75,7 +75,6 @@ export const bit32ArrayToBuffer = (data: Array<Array<number>>): Buffer => {
       }
       const buf: Buffer = Buffer.alloc(4, 0);
       buf.writeInt32BE(swap32(dec));
-      console.log(buf);
       bufferArray.push(buf);
     });
     return Buffer.concat(bufferArray);

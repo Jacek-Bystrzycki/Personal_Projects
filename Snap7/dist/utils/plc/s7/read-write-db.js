@@ -19,7 +19,7 @@ const s7_readAreas = (s7client, multiVar) => __awaiter(void 0, void 0, void 0, f
             if (!err && data.every((result) => result.Result === 0))
                 resolve(data);
             const errorDataDBValues = JSON.stringify((0, get_object_prop_1.getObjectValue)(multiVar, 'DBNumber'));
-            reject(new errors_1.CustomError(`Cannot read data from DBs:${errorDataDBValues}`));
+            reject(new errors_1.CustomError(`Cannot read-write data from-to DBs:${errorDataDBValues}`));
         });
     });
     const timeout = new Promise((_, reject) => {

@@ -13,6 +13,7 @@ exports.S7_CreateConnections = void 0;
 const connect_to_plc_1 = require("./connect-to-plc");
 const errors_1 = require("../../../types/server/errors");
 const waitUntil_1 = require("../../../utils/waitUntil");
+const nanoid_1 = require("nanoid");
 class S7_CreateConnections {
     constructor(params) {
         this.params = params;
@@ -26,16 +27,11 @@ class S7_CreateConnections {
         };
         this.s7_readData = (id, indexes) => {
             const dataIndex = this._instances.findIndex((instance) => instance.id === id);
-            if (dataIndex === -1)
-                throw new errors_1.BadRequestError(`Instance ${id} not exists`);
-            if (!indexes.every((index) => typeof this._instances[dataIndex].instance.readBuffer[index - 1] !== 'undefined')) {
-                throw new errors_1.BadRequestError(`Not all indexes [${indexes}] exist in params definitions`);
-            }
             const data = [];
             indexes.forEach((index) => {
-                if (this._instances[dataIndex].instance.readBuffer[index - 1].isError)
-                    throw new errors_1.InternalError(this._instances[dataIndex].instance.readBuffer[index - 1].status);
-                data.push(this._instances[dataIndex].instance.readBuffer[index - 1].data);
+                if (this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError)
+                    throw new errors_1.InternalError(this._instances[dataIndex].instance.readBufferConsistent[index - 1].status);
+                data.push(this._instances[dataIndex].instance.readBufferConsistent[index - 1].data);
             });
             if (data.length < 1)
                 throw new errors_1.InternalError('Empty data');
@@ -44,22 +40,47 @@ class S7_CreateConnections {
         this.s7_writeData = (id, indexes, dataToWrite) => {
             const dataIndex = this._instances.findIndex((instance) => instance.id === id);
             indexes.forEach((index, i) => {
-                this._instances[dataIndex].instance.writeBuffer[index - 1].execute = true;
-                if (this._instances[dataIndex].instance.readBuffer[index - 1].isError)
-                    throw new errors_1.InternalError(this._instances[dataIndex].instance.writeBuffer[index - 1].status);
-                this._instances[dataIndex].instance.writeBuffer[index - 1].params.Data = dataToWrite[i];
+                this._instances[dataIndex].instance.writeBufferConsistent[index - 1].execute = true;
+                if (this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError)
+                    throw new errors_1.InternalError(this._instances[dataIndex].instance.writeBufferConsistent[index - 1].status);
+                this._instances[dataIndex].instance.writeBufferConsistent[index - 1].params.Data = dataToWrite[i];
             });
         };
         this.s7_writeDataSync = (id, indexes, dataToWrite) => __awaiter(this, void 0, void 0, function* () {
             const dataIndex = this._instances.findIndex((instance) => instance.id === id);
-            indexes.forEach((index, i) => {
-                this._instances[dataIndex].instance.writeBuffer[index - 1].execute = true;
-                if (this._instances[dataIndex].instance.readBuffer[index - 1].isError)
-                    throw new errors_1.InternalError(this._instances[dataIndex].instance.writeBuffer[index - 1].status);
-                this._instances[dataIndex].instance.writeBuffer[index - 1].params.Data = dataToWrite[i];
-            });
-            this._instances[dataIndex].instance.isSyncBusy = true;
-            yield (0, waitUntil_1.waitUntil)(() => !this._instances[dataIndex].instance.isSyncBusy);
+            const query = {
+                queryId: (0, nanoid_1.nanoid)(),
+                indexes,
+                data: dataToWrite,
+                isDone: false,
+                isError: false,
+                errorMsg: '',
+            };
+            this._instances[dataIndex].instance.addToSyncQueue(query);
+            const searchQueueForDone = (id) => {
+                const findQuery = this._instances[dataIndex].instance.syncQueue.find((query) => query.queryId === id);
+                return (findQuery === null || findQuery === void 0 ? void 0 : findQuery.isDone) === true;
+            };
+            const searchQueueForError = (id) => {
+                const findQuery = this._instances[dataIndex].instance.syncQueue.find((query) => query.queryId === id);
+                return (findQuery === null || findQuery === void 0 ? void 0 : findQuery.isError) === true;
+            };
+            const searchQueueForErrorMsg = (id) => {
+                const findQuery = this._instances[dataIndex].instance.syncQueue.find((query) => query.queryId === id);
+                return (findQuery === null || findQuery === void 0 ? void 0 : findQuery.errorMsg) || 'No message';
+            };
+            try {
+                yield (0, waitUntil_1.waitUntil)(() => searchQueueForDone(query.queryId), () => searchQueueForError(query.queryId), () => searchQueueForErrorMsg(query.queryId));
+            }
+            catch (error) {
+                if (typeof error === 'string')
+                    throw new errors_1.InternalError(error);
+                else
+                    throw new errors_1.InternalError('Unknown error');
+            }
+            finally {
+                this._instances[dataIndex].instance.removeFromSyncQueue(query.queryId);
+            }
         });
         this._instances = this.s7_createConnctions();
     }
