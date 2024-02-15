@@ -4,15 +4,17 @@ import snap7 = require('node-snap7');
 type S7_FormatWordLen = {
   wordLen: snap7.WordLen;
 };
-type S7_Amount = {
+type S7_Info = {
+  db: number;
+  startAddr: number;
   amount: number;
 };
 
 //Read request
-export type S7_BeforeFormatRead = Pick<S7_ReadTag, 'isError' | 'status' | 'data' | 'id' | 'format'> & S7_FormatWordLen & S7_Amount;
+export type S7_BeforeFormatRead = Pick<S7_ReadTag, 'isError' | 'status' | 'data' | 'id' | 'format'> & S7_FormatWordLen & S7_Info;
 
 export type S7_DataResponseRead = {
-  amount: number;
+  address: S7_Info;
   values: number[] | number[][];
 };
 

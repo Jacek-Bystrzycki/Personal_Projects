@@ -42,7 +42,11 @@ export const s7_formatReadData = (resp: S7_BeforeFormatRead[]): S7_AfterFormatRe
         type: tag.wordLen,
         format: tag.format,
         id: tag.id,
-        amount: tag.amount,
+        address: {
+          db: tag.db,
+          startAddr: tag.startAddr,
+          amount: tag.amount,
+        },
       };
     });
 
@@ -50,65 +54,98 @@ export const s7_formatReadData = (resp: S7_BeforeFormatRead[]): S7_AfterFormatRe
       switch (tag.type) {
         case snap7.WordLen.S7WLBit:
           if (tag.format === 'Bit') {
-            const singleData: S7_DataResponseRead = { values: [...resp.find((resp) => resp.id === tag.id)?.data!], amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: [...resp.find((resp) => resp.id === tag.id)?.data!],
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
         case snap7.WordLen.S7WLByte:
           if (tag.format === 'Byte_As_BitArray') {
-            const singleData: S7_DataResponseRead = { values: bufferByteToBitArray(resp.find((resp) => resp.id === tag.id)?.data!), amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: bufferByteToBitArray(resp.find((resp) => resp.id === tag.id)?.data!),
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
           if (tag.format === 'Byte_As_Int') {
-            const singleData: S7_DataResponseRead = { values: bufferByteToInt(resp.find((resp) => resp.id === tag.id)?.data!), amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: bufferByteToInt(resp.find((resp) => resp.id === tag.id)?.data!),
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
           if (tag.format === 'Byte_As_Uint') {
-            const singleData: S7_DataResponseRead = { values: bufferByteToUInt(resp.find((resp) => resp.id === tag.id)?.data!), amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: bufferByteToUInt(resp.find((resp) => resp.id === tag.id)?.data!),
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
         case snap7.WordLen.S7WLWord:
           if (tag.format === 'Word_As_BitArray') {
-            const singleData: S7_DataResponseRead = { values: bufferWordToBitArray(resp.find((resp) => resp.id === tag.id)?.data!), amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: bufferWordToBitArray(resp.find((resp) => resp.id === tag.id)?.data!),
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
           if (tag.format === 'Word_As_Int') {
-            const singleData: S7_DataResponseRead = { values: bufferWordToInt(resp.find((resp) => resp.id === tag.id)?.data!), amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: bufferWordToInt(resp.find((resp) => resp.id === tag.id)?.data!),
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
           if (tag.format === 'Word_As_Uint') {
-            const singleData: S7_DataResponseRead = { values: bufferWordToUInt(resp.find((resp) => resp.id === tag.id)?.data!), amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: bufferWordToUInt(resp.find((resp) => resp.id === tag.id)?.data!),
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
         case snap7.WordLen.S7WLDWord:
           if (tag.format === 'Dword_As_BitArray') {
-            const singleData: S7_DataResponseRead = { values: bufferDWordToBitArray(resp.find((resp) => resp.id === tag.id)?.data!), amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: bufferDWordToBitArray(resp.find((resp) => resp.id === tag.id)?.data!),
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
           if (tag.format === 'Dword_As_Int') {
-            const singleData: S7_DataResponseRead = { values: bufferDwordToInt(resp.find((resp) => resp.id === tag.id)?.data!), amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: bufferDwordToInt(resp.find((resp) => resp.id === tag.id)?.data!),
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
           if (tag.format === 'Dword_As_Uint') {
-            const singleData: S7_DataResponseRead = { values: bufferDwordToUInt(resp.find((resp) => resp.id === tag.id)?.data!), amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: bufferDwordToUInt(resp.find((resp) => resp.id === tag.id)?.data!),
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
         case snap7.WordLen.S7WLReal:
           if (tag.format === 'Real') {
-            const singleData: S7_DataResponseRead = { values: bufferRealToFloat(resp.find((resp) => resp.id === tag.id)?.data!), amount: tag.amount };
+            const singleData: S7_DataResponseRead = {
+              values: bufferRealToFloat(resp.find((resp) => resp.id === tag.id)?.data!),
+              address: tag.address,
+            };
             data.push(singleData);
             break;
           }
@@ -124,7 +161,7 @@ export const s7_formatReadData = (resp: S7_BeforeFormatRead[]): S7_AfterFormatRe
         status: resp[index].status,
         isError: resp[index].isError,
         format: resp[index].format,
-        amount: singleData.amount,
+        address: singleData.address,
         values: singleData.values,
       };
     });
