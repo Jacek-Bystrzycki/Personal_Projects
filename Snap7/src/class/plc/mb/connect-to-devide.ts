@@ -1,68 +1,149 @@
 import { Socket, SocketConnectOpts } from 'net';
 import Modbus = require('jsmodbus');
-import { CustomError, InternalError } from '../../../types/server/errors';
+import { InternalError } from '../../../types/server/errors';
 import { setIntervalAsync } from 'set-interval-async/fixed';
-import { MB_ReadBuffer, MB_WriteBuffer, MB_ReadParams, MB_WriteParams } from '../../../types/plc/mb/buffers';
+import type { MB_TagDef } from '../../../types/plc/mb/format';
+import type { MB_ReadTag, MB_WriteTag } from '../../../types/plc/mb/tags';
+import type { MB_SyncQuery } from '../../../types/plc/mb/syncQuery';
+import type { MB_Params } from '../../../types/plc/mb/format';
 
 export class MB_ConnectToDevice {
   private _socket: Socket;
   private _client: Modbus.ModbusTCPClient;
-  private _readBuffer: MB_ReadBuffer[];
-  private _writeBuffer: MB_WriteBuffer[];
+  private _readBuffer: MB_ReadTag[];
+  private _writeBuffer: MB_WriteTag[];
+  private _readBufferConsistent: MB_ReadTag[];
+  private _writeBufferConsistent: MB_WriteTag[];
+  private _syncQueue: MB_SyncQuery[] = [];
   private _isConnected: boolean = false;
-  private _lastErrorMsg: string = '';
-  constructor(private readonly options: SocketConnectOpts, private readonly readParams: MB_ReadParams[], private readonly writeParams: MB_WriteParams[]) {
+  private _connectCmd: boolean = false;
+  constructor(private readonly options: SocketConnectOpts, private readonly uId: number, private readonly tagsDefs: MB_TagDef[]) {
     this._socket = new Socket();
-    this._client = new Modbus.client.TCP(this._socket);
-    this._readBuffer = this.readParams.map((params): MB_ReadBuffer => {
-      return { params, data: [] };
+    this._client = new Modbus.client.TCP(this._socket, this.uId);
+    this._readBuffer = this.tagsDefs.map((tagDef): MB_ReadTag => {
+      const { data, ...params } = tagDef.params;
+      return { params, id: tagDef.id, format: tagDef.format, data: [], isError: true, status: 'Init Error' };
     });
-    this._writeBuffer = this.writeParams.map((params): MB_WriteBuffer => {
-      return { params, execute: false };
+    this._writeBuffer = this.tagsDefs.map((tagDef): MB_WriteTag => {
+      const { count, ...params } = tagDef.params;
+      return { params, id: tagDef.id, format: tagDef.format, execute: false, isError: true, status: 'Write not triggered yet' };
     });
-    // this.loop();
+    this._readBufferConsistent = structuredClone(this._readBuffer);
+    this._writeBufferConsistent = structuredClone(this._writeBuffer);
+    this.loop();
   }
 
   private loop = () => {
     this._socket.on('error', () => {
       this._isConnected = false;
+      this._connectCmd = false;
     });
     this._socket.on('close', () => {
       this._isConnected = false;
+      this._connectCmd = false;
     });
     this._socket.on('connect', () => {
+      console.log('Connected');
+
       this._isConnected = true;
+      this._connectCmd = false;
     });
 
     setIntervalAsync(async () => {
-      if (!this._isConnected) {
-        this._lastErrorMsg = 'Device offline';
-        this._socket.connect(this.options);
-      } else {
-        try {
-          this._readBuffer.forEach(async (buffer, index) => {
-            const data = await this.mb_ReadRegisters(buffer.params);
-            this._readBuffer[index] = { ...buffer, data };
+      try {
+        if (this._isConnected) {
+          //============ READ ASYNC ======================
+          this._readBuffer.forEach(async (tag, index) => {
+            try {
+              tag.data = await this.mb_ReadRegisters(tag.params);
+              tag.isError = false;
+              tag.status = 'OK';
+            } catch (error) {
+              tag.isError = true;
+              tag.data = [];
+              if (error instanceof InternalError) {
+                tag.status = error.message;
+                this._writeBufferConsistent[index].status = tag.status;
+              } else {
+                tag.status = 'Unknown Error';
+                this._writeBufferConsistent[index].status = tag.status;
+              }
+            }
           });
-          const writeData: MB_WriteBuffer[] = this._writeBuffer.filter((data) => data.execute);
-          if (writeData.length > 0) {
-            writeData.forEach(async (data) => {
-              await this.mb_WriteRegisters(data.params);
-            });
-            this._writeBuffer.forEach((data) => (data.execute = false));
-          }
-        } catch (error) {
-          if (error instanceof CustomError) this._lastErrorMsg = error.message;
-          else this._lastErrorMsg = 'Unknown error';
+          //============ WRITE ASYNC ======================
+          this._writeBuffer.forEach(async (tag, index) => {
+            if (tag.execute) {
+              try {
+                if (!this._readBuffer[index].isError) {
+                  await this.mb_WriteRegisters(tag.params);
+                  tag.execute = false;
+                  tag.isError = false;
+                  tag.status = 'Done';
+                } else {
+                  throw new InternalError(this._readBuffer[index].status);
+                }
+              } catch (error) {
+                tag.execute = false;
+                tag.isError = true;
+                if (error instanceof InternalError) {
+                  tag.status = error.message;
+                } else tag.status = 'Unknown Error';
+              }
+            }
+          });
+          //============ WRITE SYNC ======================
+          this._syncQueue.forEach((query) => {
+            if (!query.isDone && !query.isError) {
+              query.indexes.forEach(async (index, i) => {
+                const dataToWrite: Pick<MB_Params, 'area' | 'type' | 'start' | 'data'> = { ...this._writeBuffer[index - 1].params, data: query.data[i] };
+                try {
+                  await this.mb_WriteRegisters(dataToWrite);
+                  query.isDone = true;
+                } catch (error) {
+                  query.isError = true;
+                  if (error instanceof InternalError) {
+                    query.errorMsg = error.message;
+                  } else query.errorMsg = 'Unknown Error during writing';
+                }
+              });
+            }
+          });
+          //==============================================
+        } else {
+          throw new InternalError(`Device offline`);
         }
+      } catch (error) {
+        if (!this._connectCmd) {
+          this._socket.connect(this.options);
+          this._connectCmd = true;
+        }
+        this._readBuffer.forEach((tag, index) => {
+          tag.isError = true;
+          if (error instanceof InternalError) {
+            tag.status = error.message;
+            this._writeBufferConsistent[index].status = tag.status;
+            tag.data = [];
+          } else {
+            tag.status = 'Unknown Error';
+            this._writeBufferConsistent[index].status = tag.status;
+          }
+        });
       }
+      this._readBufferConsistent = structuredClone(this._readBuffer);
+      this._writeBuffer = this._writeBuffer.map((tag, index) => {
+        const params = { ...tag.params, data: this._writeBufferConsistent[index].params.data };
+        const toWriteBufer: MB_WriteTag = { ...tag, execute: this._writeBufferConsistent[index].execute ? true : false, params };
+        this._writeBufferConsistent[index].execute = false;
+        return toWriteBufer;
+      });
     }, 1000);
   };
 
-  public mb_ReadRegisters = async (params: MB_ReadParams): Promise<number[]> => {
+  public mb_ReadRegisters = async (params: Pick<MB_Params, 'area' | 'type' | 'start' | 'count'>): Promise<number[]> => {
+    const { start, count } = params;
     const promise = new Promise<number[]>((resolve, reject) => {
       this._client
-        .readHoldingRegisters(params.start, params.count)
+        .readHoldingRegisters(start, count)
         .then(({ response }) => {
           resolve(response.body.valuesAsArray as number[]);
         })
@@ -78,10 +159,11 @@ export class MB_ConnectToDevice {
     return Promise.race([promise, timeout]);
   };
 
-  public mb_WriteRegisters = async (params: MB_WriteParams): Promise<void> => {
+  public mb_WriteRegisters = async (params: Pick<MB_Params, 'area' | 'type' | 'start' | 'data'>): Promise<void> => {
+    const { start, data } = params;
     const promise = new Promise<void>((resolve, reject) => {
       this._client
-        .writeMultipleRegisters(params.start, params.data)
+        .writeMultipleRegisters(start, data)
         .then(() => {
           resolve();
         })
@@ -115,23 +197,27 @@ export class MB_ConnectToDevice {
     }
   };
 
-  public get readBuffer(): MB_ReadBuffer[] {
-    return this._readBuffer;
+  public addToSyncQueue = (data: MB_SyncQuery): void => {
+    this._syncQueue.push(data);
+  };
+
+  public removeFromSyncQueue = (id: string): void => {
+    this._syncQueue = this._syncQueue.filter((query) => query.queryId !== id);
+  };
+
+  public get readBufferConsistent(): MB_ReadTag[] {
+    return this._readBufferConsistent;
   }
 
-  public get writeBuffer(): MB_WriteBuffer[] {
-    return this._writeBuffer;
+  public get writeBufferConsistent(): MB_WriteTag[] {
+    return this._writeBufferConsistent;
   }
 
-  public set writeBuffer(data: MB_WriteBuffer[]) {
-    this._writeBuffer = data;
+  public set writeBufferConsistent(data: MB_WriteTag[]) {
+    this._writeBufferConsistent = data;
   }
 
-  public get isConnected(): boolean {
-    return this._isConnected;
-  }
-
-  public get lastErrorMsg(): string {
-    return this._lastErrorMsg;
+  public get syncQueue(): MB_SyncQuery[] {
+    return this._syncQueue;
   }
 }

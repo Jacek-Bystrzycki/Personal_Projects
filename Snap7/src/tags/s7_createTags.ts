@@ -15,6 +15,7 @@ const getS7Area = (data: string): snap7.Area => {
   }
   throw new Error('Wrong S7 Area');
 };
+
 const getS7WordLen = (data: string): snap7.WordLen => {
   switch (data) {
     case 'Bit':

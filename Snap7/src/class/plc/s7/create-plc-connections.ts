@@ -1,20 +1,21 @@
 import { S7_ConnectToPlc } from './connect-to-plc';
 import { S7_PLCInstance } from '../../../types/plc/s7/plc-instance';
-import { S7_CreateConnectionsParams } from '../../../types/plc/s7/conn-param';
+import { S7_ConnectionParamType } from '../../../types/plc/s7/conn-param';
 import { InternalError } from '../../../types/server/errors';
-import { BeforeFormat } from '../../../types/plc/s7/respose';
+import { S7_BeforeFormat } from '../../../types/plc/s7/respose';
 import { waitUntil } from '../../../utils/waitUntil';
 import { nanoid } from 'nanoid';
-import { SyncQuery } from '../../../types/plc/s7/syncQuery';
+import { S7_SyncQuery } from '../../../types/plc/s7/syncQuery';
+import { searchQueueForDone, searchQueueForError, searchQueueForErrorMsg } from '../../../utils/plc/serachQuery';
 
 export class S7_CreateConnections {
   private _instances: S7_PLCInstance[];
-  constructor(private params: S7_CreateConnectionsParams) {
+  constructor(private params: S7_ConnectionParamType[]) {
     this._instances = this.s7_createConnctions();
   }
 
   private s7_createConnctions = (): S7_PLCInstance[] => {
-    const plcInstances: S7_ConnectToPlc[] = this.params.plcDefinitions.map((plc) => {
+    const plcInstances: S7_ConnectToPlc[] = this.params.map((plc) => {
       return new S7_ConnectToPlc(...plc);
     });
     return plcInstances.map((instance, index) => {
@@ -22,13 +23,13 @@ export class S7_CreateConnections {
     });
   };
 
-  public s7_readData = (id: number, indexes: number[]): BeforeFormat[] => {
+  public s7_readData = (id: number, indexes: number[]): S7_BeforeFormat[] => {
     const dataIndex: number = this._instances.findIndex((instance) => instance.id === id);
 
-    const resp: BeforeFormat[] = [];
+    const resp: S7_BeforeFormat[] = [];
 
     indexes.forEach((index) => {
-      const data: BeforeFormat = {
+      const data: S7_BeforeFormat = {
         isError: this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError,
         status: this._instances[dataIndex].instance.readBufferConsistent[index - 1].status,
         data: this._instances[dataIndex].instance.readBufferConsistent[index - 1].data,
@@ -44,9 +45,9 @@ export class S7_CreateConnections {
     const dataIndex: number = this._instances.findIndex((instance) => instance.id === id);
 
     indexes.forEach((index, i) => {
-      this._instances[dataIndex].instance.writeBufferConsistent[index - 1].execute = true;
       if (this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError)
         throw new InternalError(this._instances[dataIndex].instance.writeBufferConsistent[index - 1].status);
+      this._instances[dataIndex].instance.writeBufferConsistent[index - 1].execute = true;
       this._instances[dataIndex].instance.writeBufferConsistent[index - 1].params.Data = dataToWrite[i];
     });
   };
@@ -54,7 +55,7 @@ export class S7_CreateConnections {
   public s7_writeDataSync = async (id: number, indexes: number[], dataToWrite: Buffer[]): Promise<void> => {
     const dataIndex: number = this._instances.findIndex((instance) => instance.id === id);
 
-    const query: SyncQuery = {
+    const query: S7_SyncQuery = {
       queryId: nanoid(),
       indexes,
       data: dataToWrite,
@@ -65,23 +66,11 @@ export class S7_CreateConnections {
 
     this._instances[dataIndex].instance.addToSyncQueue(query);
 
-    const searchQueueForDone = (id: string): boolean => {
-      const findQuery = this._instances[dataIndex].instance.syncQueue.find((query) => query.queryId === id);
-      return findQuery?.isDone === true;
-    };
-    const searchQueueForError = (id: string): boolean => {
-      const findQuery = this._instances[dataIndex].instance.syncQueue.find((query) => query.queryId === id);
-      return findQuery?.isError === true;
-    };
-    const searchQueueForErrorMsg = (id: string): string => {
-      const findQuery = this._instances[dataIndex].instance.syncQueue.find((query) => query.queryId === id);
-      return findQuery?.errorMsg || 'No message';
-    };
     try {
       await waitUntil(
-        () => searchQueueForDone(query.queryId),
-        () => searchQueueForError(query.queryId),
-        () => searchQueueForErrorMsg(query.queryId)
+        () => searchQueueForDone(query.queryId, this._instances[dataIndex].instance.syncQueue),
+        () => searchQueueForError(query.queryId, this._instances[dataIndex].instance.syncQueue),
+        () => searchQueueForErrorMsg(query.queryId, this._instances[dataIndex].instance.syncQueue)
       );
     } catch (error) {
       if (typeof error === 'string') throw new InternalError(error);

@@ -23,19 +23,32 @@ export class CustomServer extends StandardServer {
   private configS7Routes = () => {
     if (this.devices.s7_definitions) {
       this.s7_router = new CustomRouter();
-      this.s7_controller = new S7_Controller(this);
-      this.s7_router.addMethod('GET', '/read/:id', this.s7_controller.read);
-      this.s7_router.addMethod('PUT', '/write/:id', this.s7_controller.write);
-      this.s7_router.addMethod('PUT', '/writesync/:id', this.s7_controller.writeSync);
+      this.s7_controller = new S7_Controller(this.devices.s7_definitions);
+
+      this.s7_router.addMiddleware('GET', '/read/:id', [this.s7_controller.verifyS7Params, this.s7_controller.read]);
+      this.s7_router.addMiddleware('PUT', '/write/:id', [this.s7_controller.verifyS7Params, this.s7_controller.verifyS7Payload, this.s7_controller.write]);
+      this.s7_router.addMiddleware('PUT', '/writesync/:id', [
+        this.s7_controller.verifyS7Params,
+        this.s7_controller.verifyS7Payload,
+        this.s7_controller.writeSync,
+      ]);
+
       this.app.use(mainPaths.S7, this.s7_router.router);
     }
   };
   private configMBRoutes = () => {
     if (this.devices.mb_definitions) {
       this.mb_router = new CustomRouter();
-      this.mb_controller = new MB_Controller(this);
-      this.mb_router.addMethod('GET', '/read/:id', this.mb_controller.read);
-      this.mb_router.addMethod('PUT', '/write/:id', this.mb_controller.write);
+      this.mb_controller = new MB_Controller(this.devices.mb_definitions);
+
+      this.mb_router.addMiddleware('GET', '/read/:id', [this.mb_controller.verifyMBParams, this.mb_controller.read]);
+      this.mb_router.addMiddleware('PUT', '/write/:id', [this.mb_controller.verifyMBParams, this.mb_controller.verifyMBPayload, this.mb_controller.write]);
+      this.mb_router.addMiddleware('PUT', '/writesync/:id', [
+        this.mb_controller.verifyMBParams,
+        this.mb_controller.verifyMBPayload,
+        this.mb_controller.writeSync,
+      ]);
+
       this.app.use(mainPaths.MB, this.mb_router.router);
     }
   };

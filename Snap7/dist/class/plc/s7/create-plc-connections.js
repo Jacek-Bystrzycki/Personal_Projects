@@ -18,7 +18,7 @@ class S7_CreateConnections {
     constructor(params) {
         this.params = params;
         this.s7_createConnctions = () => {
-            const plcInstances = this.params.plcDefinitions.map((plc) => {
+            const plcInstances = this.params.map((plc) => {
                 return new connect_to_plc_1.S7_ConnectToPlc(...plc);
             });
             return plcInstances.map((instance, index) => {
@@ -27,15 +27,17 @@ class S7_CreateConnections {
         };
         this.s7_readData = (id, indexes) => {
             const dataIndex = this._instances.findIndex((instance) => instance.id === id);
-            const data = [];
+            const resp = [];
             indexes.forEach((index) => {
-                if (this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError)
-                    throw new errors_1.InternalError(this._instances[dataIndex].instance.readBufferConsistent[index - 1].status);
-                data.push(this._instances[dataIndex].instance.readBufferConsistent[index - 1].data);
+                const data = {
+                    isError: this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError,
+                    status: this._instances[dataIndex].instance.readBufferConsistent[index - 1].status,
+                    data: this._instances[dataIndex].instance.readBufferConsistent[index - 1].data,
+                    id: this._instances[dataIndex].instance.readBufferConsistent[index - 1].id,
+                };
+                resp.push(data);
             });
-            if (data.length < 1)
-                throw new errors_1.InternalError('Empty data');
-            return data;
+            return resp;
         };
         this.s7_writeData = (id, indexes, dataToWrite) => {
             const dataIndex = this._instances.findIndex((instance) => instance.id === id);

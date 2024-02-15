@@ -10,6 +10,9 @@ declare global {
   namespace Express {
     interface Request {
       port: string;
+      id: number;
+      tags: number[];
+      data: number[][];
     }
   }
 }
@@ -40,6 +43,13 @@ export class StandardServer implements ServerType {
     });
 
     this.app.use(morgan('Port :port :method :url Status :status - :response-time ms'));
+
+    this.app.use((req: Request, res: Response, next: NextFunction) => {
+      req.id = 0;
+      req.tags = [];
+      req.data = [];
+      next();
+    });
   };
 
   protected startServer = () => {

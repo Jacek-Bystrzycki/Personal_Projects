@@ -21,8 +21,7 @@ class MB_CreateConnections {
             if (!indexes.every((index) => typeof this._instances[dataIndex].instance.readBuffer[index - 1] !== 'undefined')) {
                 throw new errors_1.BadRequestError(`Not all indexes [${indexes}] exist in params definitions`);
             }
-            if (!this._instances[dataIndex].instance.isConnected)
-                throw new errors_1.InternalError(this._instances[dataIndex].instance.lastErrorMsg);
+            // if (!this._instances[dataIndex].instance.isConnected) throw new InternalError(this._instances[dataIndex].instance.lastErrorMsg);
             const data = [];
             indexes.forEach((index) => {
                 data.push(this._instances[dataIndex].instance.readBuffer[index - 1].data);
@@ -33,8 +32,7 @@ class MB_CreateConnections {
             const dataIndex = this._instances.findIndex((item) => item.id === id);
             if (dataIndex === -1)
                 throw new errors_1.BadRequestError(`Instance ${id} not exists`);
-            if (!this._instances[dataIndex].instance.isConnected)
-                throw new errors_1.InternalError(this._instances[dataIndex].instance.lastErrorMsg);
+            // if (!this._instances[dataIndex].instance.isConnected) throw new InternalError(this._instances[dataIndex].instance.lastErrorMsg);
             if (indexes.length !== dataToWrite.length)
                 throw new errors_1.BadRequestError('Wrong amount of data');
             if (!indexes.every((index) => typeof this._instances[dataIndex].instance.writeBuffer[index - 1] !== 'undefined'))

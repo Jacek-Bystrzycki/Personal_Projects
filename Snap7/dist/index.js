@@ -11,23 +11,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const create_plc_connections_1 = require("./class/plc/s7/create-plc-connections");
 const create_mb_connection_1 = require("./class/plc/mb/create-mb-connection");
-// import { mb_deviceDefinitions_1, mb_deviceDefinitions_2 } from './connections/plc/mb/conn-params';
-const conn_params_1 = require("./connections/plc/mb/conn-params");
 const custom_server_1 = require("./class/server/custom-server");
-const conn_params_2 = require("./connections/server/conn-params");
-const importFile_1 = require("./tags/importFile");
-const conn_params_3 = require("./connections/plc/s7/conn-params");
+const conn_params_1 = require("./connections/server/conn-params");
+const s7_createTags_1 = require("./tags/s7_createTags");
+const conn_params_2 = require("./connections/plc/s7/conn-params");
+const mb_createTags_1 = require("./tags/mb_createTags");
+const conn_params_3 = require("./connections/plc/mb/conn-params");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     //=== ================ Server 1 ==================
-    let tagFile = 's7-tags-s1-p1.xlsx';
-    let tags = yield (0, importFile_1.createS7Tags)(tagFile);
-    const plc1 = new conn_params_3.S7_Definition('10.0.0.15', 0, 1, tags);
-    tagFile = 's7-tags-s1-p2.xlsx';
-    tags = yield (0, importFile_1.createS7Tags)(tagFile);
-    const plc2 = new conn_params_3.S7_Definition('10.0.0.10', 0, 1, tags);
-    const mb_devices_1 = new create_mb_connection_1.MB_CreateConnections(conn_params_1.mb_deviceDefinitions_1);
-    const s7_plc_1 = new create_plc_connections_1.S7_CreateConnections({ plcDefinitions: [plc1.plc, plc2.plc] });
-    const server1 = new custom_server_1.CustomServer(conn_params_2.port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1 });
+    let s7TagFile = 's7-tags-s1-p1.xlsx';
+    let s7Tags = yield (0, s7_createTags_1.createS7Tags)(s7TagFile);
+    const plc1 = new conn_params_2.S7_Definition('10.0.0.10', 0, 1, s7Tags);
+    s7TagFile = 's7-tags-s1-p2.xlsx';
+    s7Tags = yield (0, s7_createTags_1.createS7Tags)(s7TagFile);
+    const plc2 = new conn_params_2.S7_Definition('10.0.0.15', 0, 1, s7Tags);
+    const s7_plc_1 = new create_plc_connections_1.S7_CreateConnections([plc1.plc, plc2.plc]);
+    let mbTagFile = 'mb-tags-s1-d1.xlsx';
+    let mbTags = yield (0, mb_createTags_1.createMBTags)(mbTagFile);
+    const device_1 = new conn_params_3.MB_Defintion({ host: '10.0.0.10', port: 502 }, mbTags);
+    const mb_devices_1 = new create_mb_connection_1.MB_CreateConnections([device_1.device]);
+    const server1 = new custom_server_1.CustomServer(conn_params_1.port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1 });
     //=== ================ Server 2 ==================
     // tagFile = 's7-tags-s2-p2.xlsx';
     // readTags = await createS7ReadTags(tagFile);
