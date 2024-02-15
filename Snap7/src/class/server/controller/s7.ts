@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { getDateAsString } from '../../../utils/get-date-as-string';
 import { BadRequestError } from '../../../types/server/errors';
 import { S7_CreateConnections } from '../../plc/s7/create-plc-connections';
-import type { S7_BeforeFormat, S7_AfterFormat } from '../../../types/plc/s7/respose';
+import type { S7_BeforeFormatRead, S7_AfterFormatRead, S7_AfterFormatWrite, S7_BeforeFormatWrite } from '../../../types/plc/s7/request';
 import { verifyParams } from './verifyQueryParams';
 import { s7_formatReadData, s7_formatWriteData } from './formatData';
 
@@ -40,18 +40,27 @@ export class S7_Controller {
 
   public read = (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const resp: S7_BeforeFormat[] = this.instance.s7_readData(req.id, req.tags);
-      const data: S7_AfterFormat[] = s7_formatReadData(this.instance, resp, req.id, req.tags);
-      res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, data });
+      const data: S7_BeforeFormatRead[] = this.instance.s7_readData(req.id, req.tags);
+      const response: S7_AfterFormatRead[] = s7_formatReadData(data);
+      res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, amount: response.length, response });
     } catch (error) {
       next(error);
     }
   };
 
   public write = (req: Request, res: Response, next: NextFunction): void => {
+    const writeTags: S7_BeforeFormatWrite[] = req.tags.map((index, i) => {
+      return {
+        type: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.WordLen,
+        format: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
+        id: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
+        data: req.data[i],
+      };
+    });
+
     try {
-      const buffers: Buffer[] = s7_formatWriteData(this.instance, req.id, req.tags, req.data)!;
-      this.instance.s7_writeData(req.id, req.tags, buffers);
+      const data: S7_AfterFormatWrite = s7_formatWriteData(req.id, writeTags, req.data);
+      this.instance.s7_writeData(data);
       res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
     } catch (error) {
       next(error);
@@ -59,9 +68,18 @@ export class S7_Controller {
   };
 
   public writeSync = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const writeTags: S7_BeforeFormatWrite[] = req.tags.map((index, i) => {
+      return {
+        type: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.WordLen,
+        format: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
+        id: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
+        data: req.data[i],
+      };
+    });
+
     try {
-      const buffers: Buffer[] = s7_formatWriteData(this.instance, req.id, req.tags, req.data)!;
-      await this.instance.s7_writeDataSync(req.id, req.tags, buffers);
+      const data: S7_AfterFormatWrite = s7_formatWriteData(req.id, writeTags, req.data);
+      await this.instance.s7_writeDataSync(data);
       res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
     } catch (error) {
       next(error);

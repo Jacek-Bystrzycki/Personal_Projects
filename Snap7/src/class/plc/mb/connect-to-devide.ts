@@ -1,4 +1,6 @@
 import { Socket, SocketConnectOpts } from 'net';
+import { SerialPort, SerialPortOpenOptions } from 'serialport';
+import { AutoDetectTypes } from '@serialport/bindings-cpp';
 import Modbus = require('jsmodbus');
 import { InternalError } from '../../../types/server/errors';
 import { setIntervalAsync } from 'set-interval-async/fixed';
@@ -8,6 +10,9 @@ import type { MB_SyncQuery } from '../../../types/plc/mb/syncQuery';
 import type { MB_Params } from '../../../types/plc/mb/format';
 
 export class MB_ConnectToDevice {
+  // private _serialOptions: SerialPortOpenOptions<AutoDetectTypes>;
+  // private _clientRtu: Modbus.ModbusRTUClient;
+  // private _socketSerial: SerialPort;
   private _socket: Socket;
   private _client: Modbus.ModbusTCPClient;
   private _readBuffer: MB_ReadTag[];
@@ -18,6 +23,22 @@ export class MB_ConnectToDevice {
   private _isConnected: boolean = false;
   private _connectCmd: boolean = false;
   constructor(private readonly options: SocketConnectOpts, private readonly uId: number, private readonly tagsDefs: MB_TagDef[]) {
+    // RTU
+    // SerialPort.list().then((ports) => ports.forEach((port) => console.log(port.path)));
+    // this._serialOptions = {
+    //   path: 'COM1',
+    //   baudRate: 9600,
+    //   parity: 'none',
+    //   dataBits: 8,
+    //   stopBits: 1,
+    // };
+    // this._socketSerial = new SerialPort(this._serialOptions);
+    // this._clientRtu = new Modbus.client.RTU(this._socketSerial, 1);
+    // this._socketSerial.on('error', console.error);
+    // this._socketSerial.on('open', () => {
+    //   this._clientRtu.readHoldingRegisters(0, 2);
+    // });
+    // TCP
     this._socket = new Socket();
     this._client = new Modbus.client.TCP(this._socket, this.uId);
     this._readBuffer = this.tagsDefs.map((tagDef): MB_ReadTag => {
@@ -43,8 +64,6 @@ export class MB_ConnectToDevice {
       this._connectCmd = false;
     });
     this._socket.on('connect', () => {
-      console.log('Connected');
-
       this._isConnected = true;
       this._connectCmd = false;
     });

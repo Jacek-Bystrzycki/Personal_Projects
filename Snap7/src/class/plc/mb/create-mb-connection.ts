@@ -2,7 +2,7 @@ import { MB_ConnectToDevice } from './connect-to-devide';
 import { MB_DeviceInstance } from '../../../types/plc/mb/mb-instances';
 import { MB_ConnectionParamType } from '../../../types/plc/mb/conn-params';
 import { BadRequestError, InternalError } from '../../../types/server/errors';
-import { MB_BeforeFormat } from '../../../types/plc/mb/response';
+import { MB_BeforeFormat } from '../../../types/plc/mb/request';
 import { nanoid } from 'nanoid';
 import type { MB_SyncQuery } from '../../../types/plc/mb/syncQuery';
 import { searchQueueForDone, searchQueueForError, searchQueueForErrorMsg } from '../../../utils/plc/serachQuery';
