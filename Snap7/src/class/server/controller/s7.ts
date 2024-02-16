@@ -13,8 +13,8 @@ export class S7_Controller {
   public verifyS7Params = (req: Request, res: Response, next: NextFunction): void => {
     try {
       const { numId, numTags } = verifyParams(req, this.instance)!;
-      req.id = numId;
-      req.tags = numTags;
+      req.s7.id = numId;
+      req.s7.tags = numTags;
       next();
     } catch (error) {
       next(error);
@@ -26,12 +26,12 @@ export class S7_Controller {
     try {
       if (!(Array.isArray(data) && data.every((item) => Array.isArray(item) && item.every((index) => typeof index === 'number' || Array.isArray(index)))))
         throw new BadRequestError('Wrong data payload');
-      if (req.tags.length !== data.length) throw new BadRequestError(`Wrong amount of data payload`);
-      req.tags.forEach((index, i) => {
-        if (this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)?.params.Amount !== data[i].length)
+      if (req.s7.tags.length !== data.length) throw new BadRequestError(`Wrong amount of data payload`);
+      req.s7.tags.forEach((index, i) => {
+        if (this.instance.instances[req.s7.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)?.params.Amount !== data[i].length)
           throw new BadRequestError(`Wrong amount of data in at least one of the data payload`);
       });
-      req.data = data;
+      req.s7.data = data;
       next();
     } catch (error) {
       next(error);
@@ -40,7 +40,7 @@ export class S7_Controller {
 
   public read = (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const data: S7_BeforeFormatRead[] = this.instance.s7_readData(req.id, req.tags);
+      const data: S7_BeforeFormatRead[] = this.instance.s7_readData(req.s7.id, req.s7.tags);
       const response: S7_AfterFormatRead[] = s7_formatReadData(data);
       res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, amount: response.length, response });
     } catch (error) {
@@ -49,17 +49,17 @@ export class S7_Controller {
   };
 
   public write = (req: Request, res: Response, next: NextFunction): void => {
-    const writeTags: S7_BeforeFormatWrite[] = req.tags.map((index, i) => {
+    const writeTags: S7_BeforeFormatWrite[] = req.s7.tags.map((index, i) => {
       return {
-        type: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.WordLen,
-        format: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
-        id: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
-        data: req.data[i],
+        type: this.instance.instances[req.s7.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.WordLen,
+        format: this.instance.instances[req.s7.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
+        id: this.instance.instances[req.s7.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
+        data: req.s7.data[i],
       };
     });
 
     try {
-      const data: S7_AfterFormatWrite = s7_formatWriteData(req.id, writeTags, req.data);
+      const data: S7_AfterFormatWrite = s7_formatWriteData(req.s7.id, writeTags, req.s7.data);
       this.instance.s7_writeData(data);
       res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
     } catch (error) {
@@ -68,17 +68,17 @@ export class S7_Controller {
   };
 
   public writeSync = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const writeTags: S7_BeforeFormatWrite[] = req.tags.map((index, i) => {
+    const writeTags: S7_BeforeFormatWrite[] = req.s7.tags.map((index, i) => {
       return {
-        type: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.WordLen,
-        format: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
-        id: this.instance.instances[req.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
-        data: req.data[i],
+        type: this.instance.instances[req.s7.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.WordLen,
+        format: this.instance.instances[req.s7.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
+        id: this.instance.instances[req.s7.id - 1].instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
+        data: req.s7.data[i],
       };
     });
 
     try {
-      const data: S7_AfterFormatWrite = s7_formatWriteData(req.id, writeTags, req.data);
+      const data: S7_AfterFormatWrite = s7_formatWriteData(req.s7.id, writeTags, req.s7.data);
       await this.instance.s7_writeDataSync(data);
       res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
     } catch (error) {

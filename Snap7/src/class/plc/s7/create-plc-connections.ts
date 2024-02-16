@@ -36,10 +36,14 @@ export class S7_CreateConnections {
         data: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.data,
         id: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.id,
         format: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.format,
-        amount: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.Amount,
         wordLen: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.WordLen,
-        db: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.DBNumber!,
-        startAddr: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.Start,
+        address: {
+          deviceId: dataIndex,
+          type: 's7',
+          db: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.DBNumber!,
+          startAddr: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.Start,
+          amount: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.Amount,
+        },
       };
       resp.push(data);
     });

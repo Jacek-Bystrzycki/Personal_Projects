@@ -6,13 +6,24 @@ import { Request, Response, NextFunction } from 'express';
 import morgan = require('morgan');
 import { IncomingMessage } from 'http';
 
+type QueryData = {
+  id: number;
+  tags: number[];
+  data: number[][];
+};
+
+const initQueryData = (queryData: QueryData): void => {
+  queryData.id = 0;
+  queryData.tags = [];
+  queryData.data = [];
+};
+
 declare global {
   namespace Express {
     interface Request {
       port: string;
-      id: number;
-      tags: number[];
-      data: number[][];
+      s7: QueryData;
+      mb: QueryData;
     }
   }
 }
@@ -45,9 +56,8 @@ export class StandardServer implements ServerType {
     this.app.use(morgan('Port :port :method :url Status :status - :response-time ms'));
 
     this.app.use((req: Request, res: Response, next: NextFunction) => {
-      req.id = 0;
-      req.tags = [];
-      req.data = [];
+      initQueryData(req.s7);
+      initQueryData(req.mb);
       next();
     });
   };

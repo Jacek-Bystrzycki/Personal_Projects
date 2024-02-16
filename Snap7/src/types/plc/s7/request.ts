@@ -1,30 +1,47 @@
+import { S7_Format } from './format';
 import type { S7_ReadTag } from './tags';
 import snap7 = require('node-snap7');
 
-type S7_FormatWordLen = {
-  wordLen: snap7.WordLen;
-};
 type S7_Info = {
+  deviceId: number;
+  type: 's7';
   db: number;
   startAddr: number;
   amount: number;
 };
 
 //Read request
-export type S7_BeforeFormatRead = Pick<S7_ReadTag, 'isError' | 'status' | 'data' | 'id' | 'format'> & S7_FormatWordLen & S7_Info;
+export type S7_BeforeFormatRead = {
+  isError: boolean;
+  status: string;
+  data: Buffer;
+  id: number;
+  format: S7_Format;
+  wordLen: snap7.WordLen;
+  address: S7_Info;
+};
 
 export type S7_DataResponseRead = {
-  address: S7_Info;
   values: number[] | number[][];
 };
 
-export type S7_AfterFormatRead = Pick<S7_ReadTag, 'isError' | 'status' | 'id' | 'format'> & S7_DataResponseRead;
+export type S7_AfterFormatRead = {
+  isError: boolean;
+  status: string;
+  values: number[] | number[][];
+  id: number;
+  format: S7_Format;
+  wordLen: snap7.WordLen;
+  address: S7_Info;
+};
 
 //Write request
 export type S7_BeforeFormatWrite = {
   type: snap7.WordLen;
   data: number[] | number[][];
-} & Pick<S7_ReadTag, 'format' | 'id'>;
+  id: number;
+  format: S7_Format;
+};
 
 export type S7_DataResponseWrite = {
   data: Buffer;
