@@ -5,25 +5,20 @@ import { getDateAsString } from '../../utils/get-date-as-string';
 import { Request, Response, NextFunction } from 'express';
 import morgan = require('morgan');
 import { IncomingMessage } from 'http';
-
-type QueryData = {
-  id: number;
-  tags: number[];
-  data: number[][];
-};
-
-const initQueryData = (queryData: QueryData): void => {
-  queryData.id = 0;
-  queryData.tags = [];
-  queryData.data = [];
-};
+import type { S7_AfterFormatRead } from '../../types/plc/s7/request';
+import type { MB_AfterFormatRead } from '../../types/plc/mb/request';
 
 declare global {
   namespace Express {
     interface Request {
+      id: number[];
+      tags: number[][];
       port: string;
-      s7: QueryData;
-      mb: QueryData;
+      data: number[][];
+    }
+    interface Response {
+      s7Tags: S7_AfterFormatRead[];
+      mbTags: MB_AfterFormatRead[];
     }
   }
 }
@@ -56,8 +51,9 @@ export class StandardServer implements ServerType {
     this.app.use(morgan('Port :port :method :url Status :status - :response-time ms'));
 
     this.app.use((req: Request, res: Response, next: NextFunction) => {
-      initQueryData(req.s7);
-      initQueryData(req.mb);
+      req.id = [];
+      req.tags = [];
+      req.data = [];
       next();
     });
   };

@@ -1,51 +1,81 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MB_Controller = void 0;
 const http_status_codes_1 = require("http-status-codes");
 const get_date_as_string_1 = require("../../../utils/get-date-as-string");
 const errors_1 = require("../../../types/server/errors");
+const verifyQueryParams_1 = require("./verifyQueryParams");
 class MB_Controller {
     constructor(instance) {
         this.instance = instance;
-        this.read = (req, res, next) => {
-            var _a;
-            const { id } = req.params;
-            const { indexes } = req.query;
+        this.verifyMBParams = (req, res, next) => {
             try {
-                if (typeof indexes === 'string' && Array.isArray(JSON.parse(indexes))) {
-                    const params = JSON.parse(indexes);
-                    const numId = parseInt(id, 10);
-                    const data = (_a = this.instance.devices.mb_definitions) === null || _a === void 0 ? void 0 : _a.mb_readFromDevice(numId, params);
-                    res.status(http_status_codes_1.StatusCodes.OK).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data });
-                }
-                else
-                    throw new errors_1.BadRequestError('Wrong registers');
+                const { idArr, numTags } = (0, verifyQueryParams_1.verifyParams)(req, this.instance);
+                req.id = idArr;
+                req.tags = numTags;
+                next();
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.verifyMBPayload = (req, res, next) => {
+            const { data } = req.body;
+            try {
+                if (!(Array.isArray(data) && data.every((item) => Array.isArray(item) && item.every((index) => typeof index === 'number' || Array.isArray(index)))))
+                    throw new errors_1.BadRequestError('Wrong data payload');
+                if (req.tags.length !== 1 || req.id.length !== 1)
+                    throw new errors_1.BadRequestError('Cannot write to multiple devices in one request');
+                if (req.tags[0].length !== data.length)
+                    throw new errors_1.BadRequestError(`Wrong amount of data payload`);
+                req.tags[0].forEach((index, i) => {
+                    var _a;
+                    if (((_a = this.instance.instances[req.id[0] - 1].instance.readBufferConsistent.find((tag) => tag.id === index)) === null || _a === void 0 ? void 0 : _a.params.count) !== data[i].length)
+                        throw new errors_1.BadRequestError(`Wrong amount of data in at least one of the data payload`);
+                });
+                req.data = data;
+                next();
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.read = (req, res, next) => {
+            try {
+                const data = this.instance.mb_readFromDevice(req.id, req.tags);
+                res.status(http_status_codes_1.StatusCodes.OK).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data });
             }
             catch (error) {
                 next(error);
             }
         };
         this.write = (req, res, next) => {
-            var _a;
-            const { id } = req.params;
-            const { indexes } = req.query;
-            const { data } = req.body;
             try {
-                if (typeof indexes !== 'string')
-                    throw new errors_1.BadRequestError('No indexes supplied');
-                const recvIndexes = JSON.parse(indexes);
-                if (!(Array.isArray(recvIndexes) && recvIndexes.every((index) => typeof index === 'number')))
-                    throw new errors_1.BadRequestError('Wrong indexes');
-                if (!(Array.isArray(data) && data.every((index) => Array.isArray(index) && index.every((item) => typeof item === 'number'))))
-                    throw new errors_1.BadRequestError('Wrong data payload');
-                const numId = parseInt(id, 10);
-                (_a = this.instance.devices.mb_definitions) === null || _a === void 0 ? void 0 : _a.mb_writeToDevice(numId, recvIndexes, data);
-                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success` });
+                // this.instance.mb_writeToDevice(req.id, req.tags, req.data);
+                // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
             }
             catch (error) {
                 next(error);
             }
         };
+        this.writeSync = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                // await this.instance.mb_writeToDeviceSync(req.id, req.tags, req.data);
+                // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
+            }
+            catch (error) {
+                next(error);
+            }
+        });
     }
 }
 exports.MB_Controller = MB_Controller;

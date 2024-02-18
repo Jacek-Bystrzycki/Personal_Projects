@@ -19,13 +19,13 @@ const s7_readAreas = (s7client, multiVar) => __awaiter(void 0, void 0, void 0, f
             if (!err && data.every((result) => result.Result === 0))
                 resolve(data);
             const errorDataDBValues = JSON.stringify((0, get_object_prop_1.getObjectValue)(multiVar, 'DBNumber'));
-            reject(new errors_1.CustomError(`Cannot read-write data from-to DBs:${errorDataDBValues}`));
+            reject(new errors_1.InternalError(`Cannot read-write data from-to DBs:${errorDataDBValues}`));
         });
     });
     const timeout = new Promise((_, reject) => {
         setTimeout(() => {
             s7client.Disconnect();
-            reject(new errors_1.CustomError(`Timeout during reading data from PLC`));
+            reject(new errors_1.InternalError(`Timeout during reading data from PLC`));
         }, conn_params_1.s7_triggetTime / 1.5);
     });
     return Promise.race([promise, timeout]);
@@ -37,13 +37,13 @@ const s7_writeAreas = (s7client, multiVar) => __awaiter(void 0, void 0, void 0, 
             if (!err && data.every((result) => result.Result === 0))
                 resolve();
             const errorDataDBValues = JSON.stringify((0, get_object_prop_1.getObjectValue)(multiVar, 'DBNumber'));
-            reject(new errors_1.CustomError(`Cannot write data to DBs:${errorDataDBValues}`));
+            reject(new errors_1.InternalError(`Cannot write data to DBs:${errorDataDBValues}`));
         });
     });
     const timeout = new Promise((_, reject) => {
         setTimeout(() => {
             s7client.Disconnect();
-            reject(new errors_1.CustomError(`Timeout during writing data from PLC`));
+            reject(new errors_1.InternalError(`Timeout during writing data from PLC`));
         }, conn_params_1.s7_triggetTime / 1.5);
     });
     return Promise.race([promise, timeout]);

@@ -24,47 +24,55 @@ export class S7_CreateConnections {
     });
   };
 
-  public s7_readData = (id: number, tags: number[]): S7_BeforeFormatRead[] => {
-    const dataIndex: number = this._instances.findIndex((instance) => instance.id === id);
-
+  public s7_readData = (id: number[], tags: number[][]): S7_BeforeFormatRead[] => {
     const resp: S7_BeforeFormatRead[] = [];
 
-    tags.forEach((tag) => {
-      const data: S7_BeforeFormatRead = {
-        isError: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.isError,
-        status: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.status,
-        data: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.data,
-        id: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.id,
-        format: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.format,
-        wordLen: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.WordLen,
-        address: {
-          deviceId: dataIndex,
-          type: 's7',
-          db: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.DBNumber!,
-          startAddr: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.Start,
-          amount: this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.Amount,
-        },
-      };
-      resp.push(data);
+    id.forEach((singleId, index) => {
+      tags[index].forEach((tag) => {
+        const data: S7_BeforeFormatRead = {
+          isError: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.isError,
+          status: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.status,
+          data: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.data,
+          id: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.id,
+          format: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.format,
+          wordLen: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.WordLen,
+          address: {
+            deviceId: singleId,
+            type: 's7',
+            db: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.DBNumber!,
+            startAddr: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.Start,
+            amount: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.Amount,
+          },
+        };
+        resp.push(data);
+      });
     });
 
     return resp;
   };
 
   public s7_writeData = (dataToWrite: S7_AfterFormatWrite): void => {
-    const dataIndex: number = this._instances.findIndex((instance) => instance.id === dataToWrite.instanceId);
-
     dataToWrite.writeTags.forEach((tag, i) => {
-      if (this._instances[dataIndex].instance.readBufferConsistent.find((searchTag) => searchTag.id === tag.tagId)?.isError)
-        throw new InternalError(this._instances[dataIndex].instance.writeBufferConsistent.find((searchTag) => searchTag.id === tag.tagId)!.status);
-      this._instances[dataIndex].instance.writeBufferConsistent.find((searchTag) => searchTag.id === tag.tagId)!.execute = true;
-      this._instances[dataIndex].instance.writeBufferConsistent.find((searchTag) => searchTag.id === tag.tagId)!.params.Data = dataToWrite.writeTags[i].data;
+      if (
+        this._instances
+          .find((searchId) => searchId.id === dataToWrite.instanceId)!
+          .instance.readBufferConsistent.find((searchTag) => searchTag.id === tag.tagId)?.isError
+      )
+        throw new InternalError(
+          this._instances
+            .find((searchId) => searchId.id === dataToWrite.instanceId)!
+            .instance.writeBufferConsistent.find((searchTag) => searchTag.id === tag.tagId)!.status
+        );
+      this._instances
+        .find((searchId) => searchId.id === dataToWrite.instanceId)!
+        .instance.writeBufferConsistent.find((searchTag) => searchTag.id === tag.tagId)!.execute = true;
+      this._instances
+        .find((searchId) => searchId.id === dataToWrite.instanceId)!
+        .instance.writeBufferConsistent.find((searchTag) => searchTag.id === tag.tagId)!.params.Data = dataToWrite.writeTags[i].data;
     });
   };
 
   public s7_writeDataSync = async (dataToWrite: S7_AfterFormatWrite): Promise<void> => {
-    const dataIndex: number = this._instances.findIndex((instance) => instance.id === dataToWrite.instanceId);
-
     const query: S7_SyncQuery = {
       queryId: nanoid(),
       indexes: dataToWrite.writeTags.map((tag) => tag.tagId),
@@ -74,19 +82,19 @@ export class S7_CreateConnections {
       errorMsg: '',
     };
 
-    this._instances[dataIndex].instance.addToSyncQueue(query);
+    this._instances.find((searchId) => searchId.id === dataToWrite.instanceId)!.instance.addToSyncQueue(query);
 
     try {
       await waitUntil(
-        () => searchQueueForDone(query.queryId, this._instances[dataIndex].instance.syncQueue),
-        () => searchQueueForError(query.queryId, this._instances[dataIndex].instance.syncQueue),
-        () => searchQueueForErrorMsg(query.queryId, this._instances[dataIndex].instance.syncQueue)
+        () => searchQueueForDone(query.queryId, this._instances.find((searchId) => searchId.id === dataToWrite.instanceId)!.instance.syncQueue),
+        () => searchQueueForError(query.queryId, this._instances.find((searchId) => searchId.id === dataToWrite.instanceId)!.instance.syncQueue),
+        () => searchQueueForErrorMsg(query.queryId, this._instances.find((searchId) => searchId.id === dataToWrite.instanceId)!.instance.syncQueue)
       );
     } catch (error) {
       if (typeof error === 'string') throw new InternalError(error);
       else throw new InternalError('Unknown error');
     } finally {
-      this._instances[dataIndex].instance.removeFromSyncQueue(query.queryId);
+      this._instances.find((searchId) => searchId.id === dataToWrite.instanceId)!.instance.removeFromSyncQueue(query.queryId);
     }
   };
 

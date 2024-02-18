@@ -26,6 +26,12 @@ class StandardServer {
                 return req.port;
             });
             this.app.use(morgan('Port :port :method :url Status :status - :response-time ms'));
+            this.app.use((req, res, next) => {
+                req.id = [];
+                req.tags = [];
+                req.data = [];
+                next();
+            });
         };
         this.startServer = () => {
             this.app

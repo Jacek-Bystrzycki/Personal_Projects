@@ -26,9 +26,11 @@ const Modbus = require("jsmodbus");
 const errors_1 = require("../../../types/server/errors");
 const fixed_1 = require("set-interval-async/fixed");
 class MB_ConnectToDevice {
-    constructor(options, tagsDefs) {
+    constructor(options, uId, tagsDefs) {
         this.options = options;
+        this.uId = uId;
         this.tagsDefs = tagsDefs;
+        this._syncQueue = [];
         this._isConnected = false;
         this._connectCmd = false;
         this.loop = () => {
@@ -45,38 +47,108 @@ class MB_ConnectToDevice {
                 this._connectCmd = false;
             });
             (0, fixed_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
-                if (!this._isConnected && !this._connectCmd) {
-                    this._socket.connect(this.options);
-                    this._connectCmd = true;
+                try {
+                    if (this._isConnected) {
+                        //============ READ ASYNC ======================
+                        this._readBuffer.forEach((tag, index) => __awaiter(this, void 0, void 0, function* () {
+                            try {
+                                tag.data = yield this.mb_ReadRegisters(tag.params);
+                                tag.isError = false;
+                                tag.status = 'OK';
+                            }
+                            catch (error) {
+                                tag.isError = true;
+                                tag.data = [];
+                                if (error instanceof errors_1.InternalError) {
+                                    tag.status = error.message;
+                                    this._writeBufferConsistent[index].status = tag.status;
+                                }
+                                else {
+                                    tag.status = 'Unknown Error';
+                                    this._writeBufferConsistent[index].status = tag.status;
+                                }
+                            }
+                        }));
+                        //============ WRITE ASYNC ======================
+                        this._writeBuffer.forEach((tag, index) => __awaiter(this, void 0, void 0, function* () {
+                            if (tag.execute) {
+                                try {
+                                    if (!this._readBuffer[index].isError) {
+                                        yield this.mb_WriteRegisters(tag.params);
+                                        tag.execute = false;
+                                        tag.isError = false;
+                                        tag.status = 'Done';
+                                    }
+                                    else {
+                                        throw new errors_1.InternalError(this._readBuffer[index].status);
+                                    }
+                                }
+                                catch (error) {
+                                    tag.execute = false;
+                                    tag.isError = true;
+                                    if (error instanceof errors_1.InternalError) {
+                                        tag.status = error.message;
+                                    }
+                                    else
+                                        tag.status = 'Unknown Error';
+                                }
+                            }
+                        }));
+                        //============ WRITE SYNC ======================
+                        this._syncQueue.forEach((query) => {
+                            if (!query.isDone && !query.isError) {
+                                query.indexes.forEach((index, i) => __awaiter(this, void 0, void 0, function* () {
+                                    const dataToWrite = Object.assign(Object.assign({}, this._writeBuffer[index - 1].params), { data: query.data[i] });
+                                    try {
+                                        yield this.mb_WriteRegisters(dataToWrite);
+                                        query.isDone = true;
+                                    }
+                                    catch (error) {
+                                        query.isError = true;
+                                        if (error instanceof errors_1.InternalError) {
+                                            query.errorMsg = error.message;
+                                        }
+                                        else
+                                            query.errorMsg = 'Unknown Error during writing';
+                                    }
+                                }));
+                            }
+                        });
+                        //==============================================
+                    }
+                    else {
+                        throw new errors_1.InternalError(`Device offline`);
+                    }
                 }
-                else {
-                    this._readBuffer.forEach((tag) => __awaiter(this, void 0, void 0, function* () {
-                        try {
+                catch (error) {
+                    if (!this._connectCmd) {
+                        this._socket.connect(this.options);
+                        this._connectCmd = true;
+                    }
+                    this._readBuffer.forEach((tag, index) => {
+                        tag.isError = true;
+                        if (error instanceof errors_1.InternalError) {
+                            tag.status = error.message;
+                            this._writeBufferConsistent[index].status = tag.status;
+                            tag.data = [];
                         }
-                        catch (error) { }
-                    }));
-                    //============================================================
-                    // try {
-                    //   this._readBuffer.forEach(async (buffer, index) => {
-                    //     const data = await this.mb_ReadRegisters(buffer);
-                    //     this._readBuffer[index] = { ...buffer, data };
-                    //   });
-                    //   const writeData: MB_WriteTag[] = this._writeBuffer.filter((data) => data.execute);
-                    //   if (writeData.length > 0) {
-                    //     writeData.forEach(async (data) => {
-                    //       await this.mb_WriteRegisters(data);
-                    //     });
-                    //     this._writeBuffer.forEach((data) => (data.execute = false));
-                    //   }
-                    // } catch (error) {
-                    //   if (error instanceof CustomError) this._lastErrorMsg = error.message;
-                    //   else this._lastErrorMsg = 'Unknown error';
-                    // }
+                        else {
+                            tag.status = 'Unknown Error';
+                            this._writeBufferConsistent[index].status = tag.status;
+                        }
+                    });
                 }
+                this._readBufferConsistent = structuredClone(this._readBuffer);
+                this._writeBuffer = this._writeBuffer.map((tag, index) => {
+                    const params = Object.assign(Object.assign({}, tag.params), { data: this._writeBufferConsistent[index].params.data });
+                    const toWriteBufer = Object.assign(Object.assign({}, tag), { execute: this._writeBufferConsistent[index].execute ? true : false, params });
+                    this._writeBufferConsistent[index].execute = false;
+                    return toWriteBufer;
+                });
             }), 1000);
         };
         this.mb_ReadRegisters = (params) => __awaiter(this, void 0, void 0, function* () {
-            const { start, count } = params.params;
+            const { start, count } = params;
             const promise = new Promise((resolve, reject) => {
                 this._client
                     .readHoldingRegisters(start, count)
@@ -94,7 +166,7 @@ class MB_ConnectToDevice {
             return Promise.race([promise, timeout]);
         });
         this.mb_WriteRegisters = (params) => __awaiter(this, void 0, void 0, function* () {
-            const { start, data } = params.params;
+            const { start, data } = params;
             const promise = new Promise((resolve, reject) => {
                 this._client
                     .writeMultipleRegisters(start, data)
@@ -131,30 +203,53 @@ class MB_ConnectToDevice {
                 return `Unknown Error, ${err}`;
             }
         };
+        this.addToSyncQueue = (data) => {
+            this._syncQueue.push(data);
+        };
+        this.removeFromSyncQueue = (id) => {
+            this._syncQueue = this._syncQueue.filter((query) => query.queryId !== id);
+        };
+        // RTU
+        // SerialPort.list().then((ports) => ports.forEach((port) => console.log(port.path)));
+        // this._serialOptions = {
+        //   path: 'COM1',
+        //   baudRate: 9600,
+        //   parity: 'none',
+        //   dataBits: 8,
+        //   stopBits: 1,
+        // };
+        // this._socketSerial = new SerialPort(this._serialOptions);
+        // this._clientRtu = new Modbus.client.RTU(this._socketSerial, 1);
+        // this._socketSerial.on('error', console.error);
+        // this._socketSerial.on('open', () => {
+        //   this._clientRtu.readHoldingRegisters(0, 2);
+        // });
+        // TCP
         this._socket = new net_1.Socket();
-        this._client = new Modbus.client.TCP(this._socket);
+        this._client = new Modbus.client.TCP(this._socket, this.uId);
         this._readBuffer = this.tagsDefs.map((tagDef) => {
             const _a = tagDef.params, { data } = _a, params = __rest(_a, ["data"]);
             return { params, id: tagDef.id, format: tagDef.format, data: [], isError: true, status: 'Init Error' };
         });
         this._writeBuffer = this.tagsDefs.map((tagDef) => {
-            return { params: tagDef.params, id: tagDef.id, format: tagDef.format, execute: false, isError: true, status: 'Write not triggered yet' };
+            const _a = tagDef.params, { count } = _a, params = __rest(_a, ["count"]);
+            return { params, id: tagDef.id, format: tagDef.format, execute: false, isError: true, status: 'Write not triggered yet' };
         });
-        this._readBufferConsistent = this._readBuffer;
-        this._writeBufferConsistent = this._writeBuffer;
-        // this.loop();
+        this._readBufferConsistent = structuredClone(this._readBuffer);
+        this._writeBufferConsistent = structuredClone(this._writeBuffer);
+        this.loop();
     }
-    get readBuffer() {
-        return this._readBuffer;
+    get readBufferConsistent() {
+        return this._readBufferConsistent;
     }
-    get writeBuffer() {
-        return this._writeBuffer;
+    get writeBufferConsistent() {
+        return this._writeBufferConsistent;
     }
-    set writeBuffer(data) {
-        this._writeBuffer = data;
+    set writeBufferConsistent(data) {
+        this._writeBufferConsistent = data;
     }
-    get isConnected() {
-        return this._isConnected;
+    get syncQueue() {
+        return this._syncQueue;
     }
 }
 exports.MB_ConnectToDevice = MB_ConnectToDevice;

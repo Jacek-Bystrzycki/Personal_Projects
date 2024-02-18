@@ -7,7 +7,8 @@ exports.port = exports.mainPaths = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.mainPaths = {
-    S7: '/api/v1/s7',
-    MB: '/api/v1/mb',
+    AllTags: '/api/v1/tags/read',
+    S7Tags: '/api/v1/tags/s7',
+    MBTags: '/api/v1/tags/mb',
 };
 exports.port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;

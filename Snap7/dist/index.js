@@ -28,7 +28,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const s7_plc_1 = new create_plc_connections_1.S7_CreateConnections([plc1.plc, plc2.plc]);
     let mbTagFile = 'mb-tags-s1-d1.xlsx';
     let mbTags = yield (0, mb_createTags_1.createMBTags)(mbTagFile);
-    const device_1 = new conn_params_3.MB_Defintion({ host: '10.0.0.10', port: 502 }, mbTags);
+    const device_1 = new conn_params_3.MB_Defintion({ host: '10.0.0.10', port: 502 }, 1, mbTags);
     const mb_devices_1 = new create_mb_connection_1.MB_CreateConnections([device_1.device]);
     const server1 = new custom_server_1.CustomServer(conn_params_1.port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1 });
     //=== ================ Server 2 ==================

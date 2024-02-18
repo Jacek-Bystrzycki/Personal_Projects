@@ -21,18 +21,14 @@ export type S7_BeforeFormatRead = {
   address: S7_Info;
 };
 
-export type S7_DataResponseRead = {
-  values: number[] | number[][];
-};
-
 export type S7_AfterFormatRead = {
   isError: boolean;
   status: string;
-  values: number[] | number[][];
   id: number;
   format: S7_Format;
   wordLen: snap7.WordLen;
   address: S7_Info;
+  values: number[] | number[][];
 };
 
 //Write request

@@ -4,16 +4,16 @@ import { getDateAsString } from '../../../utils/get-date-as-string';
 import { BadRequestError } from '../../../types/server/errors';
 import type { MB_CreateConnections } from '../../plc/mb/create-mb-connection';
 import { verifyParams } from './verifyQueryParams';
-import type { MB_BeforeFormat } from '../../../types/plc/mb/request';
+import type { MB_BeforeFormatRead } from '../../../types/plc/mb/request';
 
 export class MB_Controller {
   constructor(private readonly instance: MB_CreateConnections) {}
 
   public verifyMBParams = (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const { numId, numTags } = verifyParams(req, this.instance)!;
-      req.mb.id = numId;
-      req.mb.tags = numTags;
+      const { idArr, numTags } = verifyParams(req, this.instance)!;
+      req.id = idArr;
+      req.tags = numTags;
       next();
     } catch (error) {
       next(error);
@@ -23,13 +23,15 @@ export class MB_Controller {
   public verifyMBPayload = (req: Request, res: Response, next: NextFunction): void => {
     const { data } = req.body;
     try {
-      if (!(Array.isArray(data) && data.every((index) => Array.isArray(index) && index.every((item) => typeof item === 'number'))))
+      if (!(Array.isArray(data) && data.every((item) => Array.isArray(item) && item.every((index) => typeof index === 'number' || Array.isArray(index)))))
         throw new BadRequestError('Wrong data payload');
-      req.mb.tags.forEach((tag, i) => {
-        if (data[i].length !== this.instance.instances[req.mb.id - 1].instance.readBufferConsistent[tag - 1].params.count)
-          throw new BadRequestError('Wrong amount of data in payload');
+      if (req.tags.length !== 1 || req.id.length !== 1) throw new BadRequestError('Cannot write to multiple devices in one request');
+      if (req.tags[0].length !== data.length) throw new BadRequestError(`Wrong amount of data payload`);
+      req.tags[0].forEach((index, i) => {
+        if (this.instance.instances[req.id[0] - 1].instance.readBufferConsistent.find((tag) => tag.id === index)?.params.count !== data[i].length)
+          throw new BadRequestError(`Wrong amount of data in at least one of the data payload`);
       });
-      req.mb.data = data;
+      req.data = data;
       next();
     } catch (error) {
       next(error);
@@ -38,7 +40,7 @@ export class MB_Controller {
 
   public read = (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const data: MB_BeforeFormat[] = this.instance.mb_readFromDevice(req.mb.id, req.mb.tags);
+      const data: MB_BeforeFormatRead[] = this.instance.mb_readFromDevice(req.id, req.tags);
       res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, data });
     } catch (error) {
       next(error);
@@ -47,8 +49,8 @@ export class MB_Controller {
 
   public write = (req: Request, res: Response, next: NextFunction): void => {
     try {
-      this.instance.mb_writeToDevice(req.mb.id, req.mb.tags, req.mb.data);
-      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
+      // this.instance.mb_writeToDevice(req.id, req.tags, req.data);
+      // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
     } catch (error) {
       next(error);
     }
@@ -56,8 +58,8 @@ export class MB_Controller {
 
   public writeSync = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      await this.instance.mb_writeToDeviceSync(req.mb.id, req.mb.tags, req.mb.data);
-      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
+      // await this.instance.mb_writeToDeviceSync(req.id, req.tags, req.data);
+      // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
     } catch (error) {
       next(error);
     }

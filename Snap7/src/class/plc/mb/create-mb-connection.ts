@@ -2,7 +2,7 @@ import { MB_ConnectToDevice } from './connect-to-devide';
 import { MB_DeviceInstance } from '../../../types/plc/mb/mb-instances';
 import { MB_ConnectionParamType } from '../../../types/plc/mb/conn-params';
 import { BadRequestError, InternalError } from '../../../types/server/errors';
-import { MB_BeforeFormat } from '../../../types/plc/mb/request';
+import { MB_BeforeFormatRead } from '../../../types/plc/mb/request';
 import { nanoid } from 'nanoid';
 import type { MB_SyncQuery } from '../../../types/plc/mb/syncQuery';
 import { searchQueueForDone, searchQueueForError, searchQueueForErrorMsg } from '../../../utils/plc/serachQuery';
@@ -22,19 +22,27 @@ export class MB_CreateConnections {
     });
   };
 
-  public mb_readFromDevice = (id: number, indexes: number[]): MB_BeforeFormat[] => {
-    const dataIndex: number = this._instances.findIndex((item) => item.id === id);
+  public mb_readFromDevice = (id: number[], tags: number[][]): MB_BeforeFormatRead[] => {
+    const resp: MB_BeforeFormatRead[] = [];
 
-    const resp: MB_BeforeFormat[] = [];
-
-    indexes.forEach((index) => {
-      const data: MB_BeforeFormat = {
-        isError: this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError,
-        status: this._instances[dataIndex].instance.readBufferConsistent[index - 1].status,
-        id: this._instances[dataIndex].instance.readBufferConsistent[index - 1].id,
-        data: this._instances[dataIndex].instance.readBufferConsistent[index - 1].data,
-      };
-      resp.push(data);
+    id.forEach((singleId, index) => {
+      tags[index].forEach((tag) => {
+        const data: MB_BeforeFormatRead = {
+          isError: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.isError,
+          status: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.status,
+          data: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.data,
+          id: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.id,
+          format: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.format,
+          address: {
+            deviceId: singleId,
+            type: 'mb',
+            holdingRegister: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params
+              .start,
+            amount: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.count,
+          },
+        };
+        resp.push(data);
+      });
     });
 
     return resp;

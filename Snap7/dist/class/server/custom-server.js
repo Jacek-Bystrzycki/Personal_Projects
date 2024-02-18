@@ -4,31 +4,52 @@ exports.CustomServer = void 0;
 const standard_server_1 = require("./standard-server");
 const conn_params_1 = require("../../connections/server/conn-params");
 const router_1 = require("./router");
+const universal_1 = require("./controller/universal");
 const s7_1 = require("./controller/s7");
 const mb_1 = require("./controller/mb");
 const error_handler_1 = require("./error-handler");
+const sendResponse_1 = require("./controller/sendResponse");
 class CustomServer extends standard_server_1.StandardServer {
     constructor(port, devices) {
         super(port);
         this.port = port;
         this.devices = devices;
+        this.configUniversalRoutes = () => {
+            if (this.devices.s7_definitions || this.devices.mb_definitions) {
+                this.universalRouter = new router_1.CustomRouter();
+                this.universal_controller = new universal_1.Universal_Controller(this.devices);
+                this.universalRouter.addMiddleware('GET', '/', [this.universal_controller.readAll, sendResponse_1.sendResponse]);
+                this.app.use(conn_params_1.mainPaths.AllTags, this.universalRouter.router);
+            }
+        };
         this.configS7Routes = () => {
             if (this.devices.s7_definitions) {
                 this.s7_router = new router_1.CustomRouter();
-                this.s7_controller = new s7_1.S7_Controller(this);
-                this.s7_router.addMethod('GET', '/read/:id', this.s7_controller.read);
-                this.s7_router.addMethod('PUT', '/write/:id', this.s7_controller.write);
-                this.s7_router.addMethod('PUT', '/writesync/:id', this.s7_controller.writeSync);
-                this.app.use(conn_params_1.mainPaths.S7, this.s7_router.router);
+                this.s7_controller = new s7_1.S7_Controller(this.devices.s7_definitions);
+                this.s7_router.addMiddleware('GET', '/read', [this.s7_controller.verifyS7Params, this.s7_controller.read, sendResponse_1.sendResponse]);
+                this.s7_router.addMiddleware('GET', '/read/:id', [this.s7_controller.verifyS7Params, this.s7_controller.read, sendResponse_1.sendResponse]);
+                this.s7_router.addMiddleware('PUT', '/write/:id', [this.s7_controller.verifyS7Params, this.s7_controller.verifyS7Payload, this.s7_controller.write]);
+                this.s7_router.addMiddleware('PUT', '/writesync/:id', [
+                    this.s7_controller.verifyS7Params,
+                    this.s7_controller.verifyS7Payload,
+                    this.s7_controller.writeSync,
+                ]);
+                this.app.use(conn_params_1.mainPaths.S7Tags, this.s7_router.router);
             }
         };
         this.configMBRoutes = () => {
             if (this.devices.mb_definitions) {
                 this.mb_router = new router_1.CustomRouter();
-                this.mb_controller = new mb_1.MB_Controller(this);
-                this.mb_router.addMethod('GET', '/read/:id', this.mb_controller.read);
-                this.mb_router.addMethod('PUT', '/write/:id', this.mb_controller.write);
-                this.app.use(conn_params_1.mainPaths.MB, this.mb_router.router);
+                this.mb_controller = new mb_1.MB_Controller(this.devices.mb_definitions);
+                this.mb_router.addMiddleware('GET', '/read', [this.mb_controller.verifyMBParams, this.mb_controller.read]);
+                this.mb_router.addMiddleware('GET', '/read/:id', [this.mb_controller.verifyMBParams, this.mb_controller.read]);
+                this.mb_router.addMiddleware('PUT', '/write/:id', [this.mb_controller.verifyMBParams, this.mb_controller.verifyMBPayload, this.mb_controller.write]);
+                this.mb_router.addMiddleware('PUT', '/writesync/:id', [
+                    this.mb_controller.verifyMBParams,
+                    this.mb_controller.verifyMBPayload,
+                    this.mb_controller.writeSync,
+                ]);
+                this.app.use(conn_params_1.mainPaths.MBTags, this.mb_router.router);
             }
         };
         this.errorHandling = () => {
@@ -36,6 +57,7 @@ class CustomServer extends standard_server_1.StandardServer {
             this.app.use(error_handler_1.ErrorHandler.errorHandler);
         };
         this.configServer();
+        this.configUniversalRoutes();
         this.configS7Routes();
         this.configMBRoutes();
         this.errorHandling();

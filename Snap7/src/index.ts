@@ -21,7 +21,7 @@ const main = async (): Promise<void> => {
 
   let mbTagFile: string = 'mb-tags-s1-d1.xlsx';
   let mbTags: MB_TagDef[] = await createMBTags(mbTagFile);
-  const device_1: MB_Defintion = new MB_Defintion({ host: '127.0.0.1', port: 502 }, 1, mbTags);
+  const device_1: MB_Defintion = new MB_Defintion({ host: '10.0.0.10', port: 502 }, 1, mbTags);
 
   const mb_devices_1 = new MB_CreateConnections([device_1.device]);
 

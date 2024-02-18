@@ -1,12 +1,5 @@
 import snap7 = require('node-snap7');
-import type {
-  S7_BeforeFormatRead,
-  S7_AfterFormatRead,
-  S7_DataResponseRead,
-  S7_BeforeFormatWrite,
-  S7_AfterFormatWrite,
-  S7_DataResponseWrite,
-} from '../../../types/plc/s7/request';
+import type { S7_BeforeFormatRead, S7_AfterFormatRead, S7_BeforeFormatWrite, S7_AfterFormatWrite, S7_DataResponseWrite } from '../../../types/plc/s7/request';
 import { BadRequestError } from '../../../types/server/errors';
 import {
   bufferByteToBitArray,

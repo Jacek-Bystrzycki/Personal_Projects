@@ -1,14 +1,18 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-type ConnType = 'S7' | 'MB';
-type QueryPath = '/api/v1/s7' | '/api/v1/mb';
-type RoutesTypes = Record<ConnType, QueryPath>;
+type RequestType = 'AllTags' | 'S7Tags' | 'MBTags';
+type RequestPath = '/api/v1/tags/read' | '/api/v1/tags/s7' | '/api/v1/tags/mb';
+
+type RoutesTypes = Record<RequestType, RequestPath>;
 export const mainPaths: RoutesTypes = {
-  S7: '/api/v1/s7',
-  MB: '/api/v1/mb',
+  AllTags: '/api/v1/tags/read',
+  S7Tags: '/api/v1/tags/s7',
+  MBTags: '/api/v1/tags/mb',
 };
-export type PathType = '/' | '/read/:id' | '/write/:id' | '/writesync/:id';
+
+export type PathType = '/' | '/read' | '/read/:id' | '/write/:id' | '/writesync/:id';
+
 export type RequestTypes = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 export const port: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
