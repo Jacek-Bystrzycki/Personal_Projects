@@ -32,6 +32,7 @@ export class MB_CreateConnections {
           status: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.status,
           data: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.data,
           id: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.id,
+          len: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.len,
           format: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.format,
           address: {
             deviceId: singleId,

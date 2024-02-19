@@ -1,7 +1,7 @@
 import type { MB_Params, MB_Format } from './format';
 
 export type MB_ReadTag = {
-  params: Pick<MB_Params, 'area' | 'type' | 'start' | 'count'>;
+  params: Pick<MB_Params, 'area' | 'len' | 'start' | 'count'>;
   id: number;
   format: MB_Format;
   data: number[];
@@ -10,7 +10,7 @@ export type MB_ReadTag = {
 };
 
 export type MB_WriteTag = {
-  params: Pick<MB_Params, 'area' | 'type' | 'start' | 'data'>;
+  params: Pick<MB_Params, 'area' | 'len' | 'start' | 'data'>;
   id: number;
   execute: boolean;
   format: MB_Format;

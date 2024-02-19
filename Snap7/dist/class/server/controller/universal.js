@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Universal_Controller = void 0;
-const formatData_1 = require("./formatData");
+const s7_formatData_1 = require("./s7-formatData");
 class Universal_Controller {
     constructor(devices) {
         this.devices = devices;
@@ -18,10 +18,12 @@ class Universal_Controller {
                         });
                     });
                     const s7_tagsBefore = this.devices.s7_definitions.s7_readData(s7_ids, s7_tags);
-                    const s7_tagAfter = (0, formatData_1.s7_formatReadData)(s7_tagsBefore);
+                    const s7_tagAfter = (0, s7_formatData_1.s7_formatReadData)(s7_tagsBefore);
                     res.s7Tags = s7_tagAfter;
                 }
                 //================== MB ===================
+                if (this.devices.mb_definitions) {
+                }
                 next();
             }
             catch (error) {

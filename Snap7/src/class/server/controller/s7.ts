@@ -5,7 +5,7 @@ import { BadRequestError } from '../../../types/server/errors';
 import { S7_CreateConnections } from '../../plc/s7/create-plc-connections';
 import type { S7_BeforeFormatRead, S7_AfterFormatRead, S7_AfterFormatWrite, S7_BeforeFormatWrite } from '../../../types/plc/s7/request';
 import { verifyParams } from './verifyQueryParams';
-import { s7_formatReadData, s7_formatWriteData } from './formatData';
+import { s7_formatReadData, s7_formatWriteData } from './s7-formatData';
 
 export class S7_Controller {
   constructor(private readonly instance: S7_CreateConnections) {}

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ServerDevices } from '../../../types/server/server-types';
 import type { S7_BeforeFormatRead, S7_AfterFormatRead } from '../../../types/plc/s7/request';
-import { s7_formatReadData } from './formatData';
+import { s7_formatReadData } from './s7-formatData';
 
 export class Universal_Controller {
   constructor(private readonly devices: ServerDevices) {}
@@ -23,6 +23,8 @@ export class Universal_Controller {
         res.s7Tags = s7_tagAfter;
       }
       //================== MB ===================
+      if (this.devices.mb_definitions) {
+      }
       next();
     } catch (error) {
       next(error);

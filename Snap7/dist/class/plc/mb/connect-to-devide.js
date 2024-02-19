@@ -47,6 +47,7 @@ class MB_ConnectToDevice {
                 this._connectCmd = false;
             });
             (0, fixed_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
+                console.log(this._readBufferConsistent);
                 try {
                     if (this._isConnected) {
                         //============ READ ASYNC ======================

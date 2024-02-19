@@ -11,7 +11,7 @@ import { sendResponse } from './controller/sendResponse';
 export class CustomServer extends StandardServer {
   private s7_router?: CustomRouter;
   private mb_router?: CustomRouter;
-  private universalRouter?: CustomRouter;
+  private universal_router?: CustomRouter;
   private s7_controller?: S7_Controller;
   private mb_controller?: MB_Controller;
   private universal_controller?: Universal_Controller;
@@ -27,10 +27,10 @@ export class CustomServer extends StandardServer {
 
   private configUniversalRoutes = () => {
     if (this.devices.s7_definitions || this.devices.mb_definitions) {
-      this.universalRouter = new CustomRouter();
+      this.universal_router = new CustomRouter();
       this.universal_controller = new Universal_Controller(this.devices);
-      this.universalRouter.addMiddleware('GET', '/', [this.universal_controller.readAll, sendResponse]);
-      this.app.use(mainPaths.AllTags, this.universalRouter.router);
+      this.universal_router.addMiddleware('GET', '/', [this.universal_controller.readAll, sendResponse]);
+      this.app.use(mainPaths.AllTags, this.universal_router.router);
     }
   };
 
@@ -55,8 +55,8 @@ export class CustomServer extends StandardServer {
       this.mb_router = new CustomRouter();
       this.mb_controller = new MB_Controller(this.devices.mb_definitions);
 
-      this.mb_router.addMiddleware('GET', '/read', [this.mb_controller.verifyMBParams, this.mb_controller.read]);
-      this.mb_router.addMiddleware('GET', '/read/:id', [this.mb_controller.verifyMBParams, this.mb_controller.read]);
+      this.mb_router.addMiddleware('GET', '/read', [this.mb_controller.verifyMBParams, this.mb_controller.read, sendResponse]);
+      this.mb_router.addMiddleware('GET', '/read/:id', [this.mb_controller.verifyMBParams, this.mb_controller.read, sendResponse]);
       this.mb_router.addMiddleware('PUT', '/write/:id', [this.mb_controller.verifyMBParams, this.mb_controller.verifyMBPayload, this.mb_controller.write]);
       this.mb_router.addMiddleware('PUT', '/writesync/:id', [
         this.mb_controller.verifyMBParams,

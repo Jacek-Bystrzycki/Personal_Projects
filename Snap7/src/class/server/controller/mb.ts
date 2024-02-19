@@ -4,7 +4,8 @@ import { getDateAsString } from '../../../utils/get-date-as-string';
 import { BadRequestError } from '../../../types/server/errors';
 import type { MB_CreateConnections } from '../../plc/mb/create-mb-connection';
 import { verifyParams } from './verifyQueryParams';
-import type { MB_BeforeFormatRead } from '../../../types/plc/mb/request';
+import type { MB_BeforeFormatRead, MB_AfterFormatRead } from '../../../types/plc/mb/request';
+import { mb_formatReadData } from './mb-formatData';
 
 export class MB_Controller {
   constructor(private readonly instance: MB_CreateConnections) {}
@@ -41,7 +42,10 @@ export class MB_Controller {
   public read = (req: Request, res: Response, next: NextFunction): void => {
     try {
       const data: MB_BeforeFormatRead[] = this.instance.mb_readFromDevice(req.id, req.tags);
-      res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, data });
+      const resp: MB_AfterFormatRead[] = mb_formatReadData(data);
+      res.mbTags = resp;
+      next();
+      // res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, data });
     } catch (error) {
       next(error);
     }

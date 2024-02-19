@@ -114,7 +114,7 @@ export class MB_ConnectToDevice {
           this._syncQueue.forEach((query) => {
             if (!query.isDone && !query.isError) {
               query.indexes.forEach(async (index, i) => {
-                const dataToWrite: Pick<MB_Params, 'area' | 'type' | 'start' | 'data'> = { ...this._writeBuffer[index - 1].params, data: query.data[i] };
+                const dataToWrite: Pick<MB_Params, 'area' | 'len' | 'start' | 'data'> = { ...this._writeBuffer[index - 1].params, data: query.data[i] };
                 try {
                   await this.mb_WriteRegisters(dataToWrite);
                   query.isDone = true;
@@ -158,11 +158,13 @@ export class MB_ConnectToDevice {
     }, 1000);
   };
 
-  public mb_ReadRegisters = async (params: Pick<MB_Params, 'area' | 'type' | 'start' | 'count'>): Promise<number[]> => {
-    const { start, count } = params;
+  public mb_ReadRegisters = async (params: Pick<MB_Params, 'area' | 'len' | 'start' | 'count'>): Promise<number[]> => {
+    const { start, count, len } = params;
+    const startNo: number = len !== 'Bit' ? start : Math.floor(start / 16);
+    const countNo: number = len !== 'Dword' ? count : count * 2;
     const promise = new Promise<number[]>((resolve, reject) => {
       this._client
-        .readHoldingRegisters(start, count)
+        .readHoldingRegisters(startNo, countNo)
         .then(({ response }) => {
           resolve(response.body.valuesAsArray as number[]);
         })
@@ -178,7 +180,7 @@ export class MB_ConnectToDevice {
     return Promise.race([promise, timeout]);
   };
 
-  public mb_WriteRegisters = async (params: Pick<MB_Params, 'area' | 'type' | 'start' | 'data'>): Promise<void> => {
+  public mb_WriteRegisters = async (params: Pick<MB_Params, 'area' | 'len' | 'start' | 'data'>): Promise<void> => {
     const { start, data } = params;
     const promise = new Promise<void>((resolve, reject) => {
       this._client

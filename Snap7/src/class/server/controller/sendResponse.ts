@@ -13,7 +13,7 @@ export const sendResponse = (req: Request, res: Response, next: NextFunction): v
       resp = [...resp, ...res.s7Tags];
     }
     if (res.mbTags) {
-      resp = [...resp, ...res.s7Tags];
+      resp = [...resp, ...res.mbTags];
     }
     res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, amount: resp.length, response: resp });
   } catch (error) {

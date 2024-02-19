@@ -8,7 +8,7 @@ export type MB_Format = (typeof mb_format)[number];
 
 export type MB_Params = {
   area: MB_Area;
-  type: MB_TagType;
+  len: MB_TagType;
   start: number;
   count: number;
   data: number[];

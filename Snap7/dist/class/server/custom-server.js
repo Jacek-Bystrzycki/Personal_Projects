@@ -16,10 +16,10 @@ class CustomServer extends standard_server_1.StandardServer {
         this.devices = devices;
         this.configUniversalRoutes = () => {
             if (this.devices.s7_definitions || this.devices.mb_definitions) {
-                this.universalRouter = new router_1.CustomRouter();
+                this.universal_router = new router_1.CustomRouter();
                 this.universal_controller = new universal_1.Universal_Controller(this.devices);
-                this.universalRouter.addMiddleware('GET', '/', [this.universal_controller.readAll, sendResponse_1.sendResponse]);
-                this.app.use(conn_params_1.mainPaths.AllTags, this.universalRouter.router);
+                this.universal_router.addMiddleware('GET', '/', [this.universal_controller.readAll, sendResponse_1.sendResponse]);
+                this.app.use(conn_params_1.mainPaths.AllTags, this.universal_router.router);
             }
         };
         this.configS7Routes = () => {

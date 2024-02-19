@@ -60,7 +60,7 @@ const createMBTags = (file) => __awaiter(void 0, void 0, void 0, function* () {
         return {
             params: {
                 area: getMBArea(getCellValue(row, 2)),
-                type: getMBType(getCellValue(row, 3)),
+                len: getMBType(getCellValue(row, 3)),
                 start: parseInt(getCellValue(row, 4), 10),
                 count: getMBType(getCellValue(row, 3)) === 'Bit' ? 1 : amount,
                 data: [],

@@ -14,7 +14,7 @@ const http_status_codes_1 = require("http-status-codes");
 const get_date_as_string_1 = require("../../../utils/get-date-as-string");
 const errors_1 = require("../../../types/server/errors");
 const verifyQueryParams_1 = require("./verifyQueryParams");
-const formatData_1 = require("./formatData");
+const s7_formatData_1 = require("./s7-formatData");
 class S7_Controller {
     constructor(instance) {
         this.instance = instance;
@@ -53,7 +53,7 @@ class S7_Controller {
         this.read = (req, res, next) => {
             try {
                 const data = this.instance.s7_readData(req.id, req.tags);
-                const response = (0, formatData_1.s7_formatReadData)(data);
+                const response = (0, s7_formatData_1.s7_formatReadData)(data);
                 res.s7Tags = response;
                 next();
             }
@@ -71,7 +71,7 @@ class S7_Controller {
                 };
             });
             try {
-                const data = (0, formatData_1.s7_formatWriteData)(req.id[0], writeTags, req.data);
+                const data = (0, s7_formatData_1.s7_formatWriteData)(req.id[0], writeTags, req.data);
                 this.instance.s7_writeData(data);
                 res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success` });
             }
@@ -89,7 +89,7 @@ class S7_Controller {
                 };
             });
             try {
-                const data = (0, formatData_1.s7_formatWriteData)(req.id[0], writeTags, req.data);
+                const data = (0, s7_formatData_1.s7_formatWriteData)(req.id[0], writeTags, req.data);
                 yield this.instance.s7_writeDataSync(data);
                 res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success` });
             }
