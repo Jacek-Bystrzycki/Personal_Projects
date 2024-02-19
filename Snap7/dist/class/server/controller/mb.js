@@ -10,10 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MB_Controller = void 0;
-const http_status_codes_1 = require("http-status-codes");
-const get_date_as_string_1 = require("../../../utils/get-date-as-string");
 const errors_1 = require("../../../types/server/errors");
 const verifyQueryParams_1 = require("./verifyQueryParams");
+const mb_formatData_1 = require("./mb-formatData");
 class MB_Controller {
     constructor(instance) {
         this.instance = instance;
@@ -52,7 +51,10 @@ class MB_Controller {
         this.read = (req, res, next) => {
             try {
                 const data = this.instance.mb_readFromDevice(req.id, req.tags);
-                res.status(http_status_codes_1.StatusCodes.OK).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data });
+                const resp = (0, mb_formatData_1.mb_formatReadData)(data);
+                res.mbTags = resp;
+                next();
+                // res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, data });
             }
             catch (error) {
                 next(error);

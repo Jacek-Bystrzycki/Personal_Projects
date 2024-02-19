@@ -48,9 +48,9 @@ export const bit16ArrayToBuffer = (data: Array<Array<number>>): Buffer => {
         }
         factor *= 2;
       }
-      const buf: Buffer = Buffer.alloc(2, 0);
-      buf.writeUInt16BE(swap16(dec));
-      bufferArray.push(buf);
+      const buf: Buffer = Buffer.alloc(4, 0);
+      buf.writeUint32BE(dec);
+      bufferArray.push(Buffer.copyBytesFrom(buf, 2, 2));
     });
     return Buffer.concat(bufferArray);
   } else throw new BadRequestError('Wrong bit sequence in payload');
@@ -73,9 +73,10 @@ export const bit32ArrayToBuffer = (data: Array<Array<number>>): Buffer => {
         }
         factor *= 2;
       }
-      const buf: Buffer = Buffer.alloc(4, 0);
-      buf.writeInt32BE(swap32(dec));
-      bufferArray.push(buf);
+      const buf: Buffer = Buffer.alloc(8, 0);
+      const decc: bigint = BigInt(dec);
+      buf.writeBigUint64BE(decc);
+      bufferArray.push(Buffer.copyBytesFrom(buf, 4, 4));
     });
     return Buffer.concat(bufferArray);
   } else throw new BadRequestError('Wrong bit sequence in payload');
@@ -151,9 +152,9 @@ export const floatToRealBuffer = (data: number[]): Buffer => {
   } else throw new BadRequestError('Wrong data in payload');
 };
 
-function swap16(val: number): number {
-  return ((val & 0xff) << 8) | ((val >> 8) & 0xff);
-}
-function swap32(val: number): number {
-  return ((val & 0xff) << 24) | ((val & 0xff00) << 8) | ((val >> 8) & 0xff00) | ((val >> 24) & 0xff);
-}
+// function swap16(val: number): number {
+//   return ((val & 0xff) << 8) | ((val >> 8) & 0xff);
+// }
+// function swap32(val: number): number {
+//   return ((val & 0xff) << 24) | ((val & 0xff00) << 8) | ((val >> 8) & 0xff00) | ((val >> 24) & 0xff);
+// }

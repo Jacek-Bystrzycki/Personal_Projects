@@ -41,8 +41,8 @@ class CustomServer extends standard_server_1.StandardServer {
             if (this.devices.mb_definitions) {
                 this.mb_router = new router_1.CustomRouter();
                 this.mb_controller = new mb_1.MB_Controller(this.devices.mb_definitions);
-                this.mb_router.addMiddleware('GET', '/read', [this.mb_controller.verifyMBParams, this.mb_controller.read]);
-                this.mb_router.addMiddleware('GET', '/read/:id', [this.mb_controller.verifyMBParams, this.mb_controller.read]);
+                this.mb_router.addMiddleware('GET', '/read', [this.mb_controller.verifyMBParams, this.mb_controller.read, sendResponse_1.sendResponse]);
+                this.mb_router.addMiddleware('GET', '/read/:id', [this.mb_controller.verifyMBParams, this.mb_controller.read, sendResponse_1.sendResponse]);
                 this.mb_router.addMiddleware('PUT', '/write/:id', [this.mb_controller.verifyMBParams, this.mb_controller.verifyMBPayload, this.mb_controller.write]);
                 this.mb_router.addMiddleware('PUT', '/writesync/:id', [
                     this.mb_controller.verifyMBParams,

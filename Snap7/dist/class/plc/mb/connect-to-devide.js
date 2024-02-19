@@ -47,7 +47,6 @@ class MB_ConnectToDevice {
                 this._connectCmd = false;
             });
             (0, fixed_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
-                console.log(this._readBufferConsistent);
                 try {
                     if (this._isConnected) {
                         //============ READ ASYNC ======================
@@ -149,10 +148,12 @@ class MB_ConnectToDevice {
             }), 1000);
         };
         this.mb_ReadRegisters = (params) => __awaiter(this, void 0, void 0, function* () {
-            const { start, count } = params;
+            const { start, count, len } = params;
+            const startNo = len !== 'Bit' ? start : Math.floor(start / 16);
+            const countNo = len !== 'Dword' ? count : count * 2;
             const promise = new Promise((resolve, reject) => {
                 this._client
-                    .readHoldingRegisters(start, count)
+                    .readHoldingRegisters(startNo, countNo)
                     .then(({ response }) => {
                     resolve(response.body.valuesAsArray);
                 })
