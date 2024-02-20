@@ -72,14 +72,14 @@ export class S7_CreateConnections {
     });
   };
 
-  public s7_writeDataSync = async (dataToWrite: S7_AfterFormatWrite): Promise<void> => {
+  public s7_writeDataSync = async (dataToWrite: S7_AfterFormatWrite): Promise<Partial<S7_SyncQuery>> => {
     const query: S7_SyncQuery = {
       queryId: nanoid(),
-      indexes: dataToWrite.writeTags.map((tag) => tag.tagId),
+      tags: dataToWrite.writeTags.map((tag) => tag.tagId),
       data: dataToWrite.writeTags.map((tag) => tag.data),
       isDone: false,
       isError: false,
-      errorMsg: '',
+      status: 'Not triggered',
     };
 
     this._instances.find((searchId) => searchId.id === dataToWrite.instanceId)!.instance.addToSyncQueue(query);
@@ -90,6 +90,12 @@ export class S7_CreateConnections {
         () => searchQueueForError(query.queryId, this._instances.find((searchId) => searchId.id === dataToWrite.instanceId)!.instance.syncQueue),
         () => searchQueueForErrorMsg(query.queryId, this._instances.find((searchId) => searchId.id === dataToWrite.instanceId)!.instance.syncQueue)
       );
+      return {
+        queryId: query.queryId,
+        isDone: query.isDone,
+        status: query.status,
+        tags: query.tags,
+      };
     } catch (error) {
       if (typeof error === 'string') throw new InternalError(error);
       else throw new InternalError('Unknown error');

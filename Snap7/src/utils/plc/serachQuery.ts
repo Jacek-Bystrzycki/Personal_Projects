@@ -13,5 +13,5 @@ export const searchQueueForError = (id: string, queue: S7_SyncQuery[] | MB_SyncQ
 
 export const searchQueueForErrorMsg = (id: string, queue: S7_SyncQuery[] | MB_SyncQuery[]): string => {
   const findQuery = queue.find((query) => query.queryId === id);
-  return findQuery?.errorMsg || 'No message';
+  return findQuery?.status || 'No message';
 };

@@ -1,8 +1,8 @@
 export type MB_SyncQuery = {
   queryId: string;
-  indexes: number[];
+  tags: number[];
   data: number[][];
   isDone: boolean;
   isError: boolean;
-  errorMsg: string;
+  status: string;
 };

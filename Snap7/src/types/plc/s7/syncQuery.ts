@@ -1,8 +1,8 @@
 export type S7_SyncQuery = {
   queryId: string;
-  indexes: number[];
+  tags: number[];
   data: Buffer[];
   isDone: boolean;
   isError: boolean;
-  errorMsg: string;
+  status: string;
 };

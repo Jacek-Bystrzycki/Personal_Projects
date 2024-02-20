@@ -9,28 +9,31 @@ export const verifyParams = (req: Request, instance: S7_CreateConnections | MB_C
 
   let idArr: number[] = [];
   if (id) {
-    idArr = id.split(',').map((id) => parseInt(id, 10));
-    if (!idArr.every((id) => !isNaN(id))) throw new BadRequestError("'Ids' needs to be a number");
+    try {
+      idArr = JSON.parse(id);
+    } catch (error) {
+      throw new BadRequestError("'Ids' needs to be an array of numbers");
+    }
+    if (!Array.isArray(idArr) || !idArr.every((id) => !isNaN(id))) throw new BadRequestError("'Ids' needs to be an array of numbers");
     idArr.forEach((id) => {
       if (!instance.instances[id - 1]) throw new BadRequestError(`Instance ${id} not exists`);
     });
   } else {
     for (let i = 0; i < instance.instances.length; i++) idArr.push(i + 1);
   }
+
   //======================
   const queryExists: boolean = Object.keys(req.query).length > 0;
   let numTags: number[][] = [];
   if (queryExists) {
     if (typeof tags !== 'string') throw new BadRequestError("'tags' missing in query");
     try {
-      {
-        const tempTags = tags.split(';').map((item) => {
-          return JSON.parse(item);
-        });
-        numTags = tempTags;
-      }
+      const tempTags = JSON.parse(tags);
+      if (!Array.isArray(tempTags) || !tempTags.every((item) => Array.isArray(item)))
+        throw new BadRequestError('Tags needs to ba an array of array of numbers');
+      numTags = tempTags;
     } catch (error) {
-      throw new BadRequestError('Tags needs to ba array of numbers');
+      throw new BadRequestError('Tags needs to ba an array of array of numbers');
     }
     if (numTags.length !== idArr.length) throw new BadRequestError('Wrong amount of tags');
   } else {

@@ -6,6 +6,7 @@ import { S7_CreateConnections } from '../../plc/s7/create-plc-connections';
 import type { S7_BeforeFormatRead, S7_AfterFormatRead, S7_AfterFormatWrite, S7_BeforeFormatWrite } from '../../../types/plc/s7/request';
 import { verifyParams } from './verifyQueryParams';
 import { s7_formatReadData, s7_formatWriteData } from './s7-formatData';
+import { S7_SyncQuery } from '../../../types/plc/s7/syncQuery';
 
 export class S7_Controller {
   constructor(private readonly instance: S7_CreateConnections) {}
@@ -63,7 +64,7 @@ export class S7_Controller {
     try {
       const data: S7_AfterFormatWrite = s7_formatWriteData(req.id[0], writeTags, req.data);
       this.instance.s7_writeData(data);
-      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
+      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, data: req.data });
     } catch (error) {
       next(error);
     }
@@ -81,8 +82,9 @@ export class S7_Controller {
 
     try {
       const data: S7_AfterFormatWrite = s7_formatWriteData(req.id[0], writeTags, req.data);
-      await this.instance.s7_writeDataSync(data);
-      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
+      const respQuery = await this.instance.s7_writeDataSync(data);
+      const resp = { ...respQuery, data: req.data };
+      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, resp });
     } catch (error) {
       next(error);
     }

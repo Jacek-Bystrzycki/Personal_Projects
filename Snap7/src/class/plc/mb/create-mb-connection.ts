@@ -1,4 +1,4 @@
-import { MB_ConnectToDevice } from './connect-to-devide';
+import { MB_ConnectToDevice } from './connect-to-device';
 import { MB_DeviceInstance } from '../../../types/plc/mb/mb-instances';
 import { MB_ConnectionParamType } from '../../../types/plc/mb/conn-params';
 import { BadRequestError, InternalError } from '../../../types/server/errors';
@@ -61,16 +61,16 @@ export class MB_CreateConnections {
     });
   };
 
-  public mb_writeToDeviceSync = async (id: number, indexes: number[], dataToWrite: number[][]): Promise<void> => {
+  public mb_writeToDeviceSync = async (id: number, indexes: number[], dataToWrite: number[][]): Promise<Partial<MB_SyncQuery>> => {
     const dataIndex: number = this._instances.findIndex((instance) => instance.id === id);
 
     const query: MB_SyncQuery = {
       queryId: nanoid(),
-      indexes,
+      tags: indexes,
       data: dataToWrite,
       isDone: false,
       isError: false,
-      errorMsg: '',
+      status: 'Not triggered',
     };
 
     this._instances[dataIndex].instance.addToSyncQueue(query);
@@ -81,6 +81,12 @@ export class MB_CreateConnections {
         () => searchQueueForError(query.queryId, this._instances[dataIndex].instance.syncQueue),
         () => searchQueueForErrorMsg(query.queryId, this._instances[dataIndex].instance.syncQueue)
       );
+      return {
+        queryId: query.queryId,
+        isDone: query.isDone,
+        status: query.status,
+        tags: query.tags,
+      };
     } catch (error) {
       if (typeof error === 'string') throw new InternalError(error);
       else throw new InternalError('Unknown error');

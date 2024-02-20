@@ -113,16 +113,17 @@ export class MB_ConnectToDevice {
           //============ WRITE SYNC ======================
           this._syncQueue.forEach((query) => {
             if (!query.isDone && !query.isError) {
-              query.indexes.forEach(async (index, i) => {
+              query.tags.forEach(async (index, i) => {
                 const dataToWrite: Pick<MB_Params, 'area' | 'len' | 'start' | 'data'> = { ...this._writeBuffer[index - 1].params, data: query.data[i] };
                 try {
                   await this.mb_WriteRegisters(dataToWrite);
+                  query.status = 'Query Done';
                   query.isDone = true;
                 } catch (error) {
                   query.isError = true;
                   if (error instanceof InternalError) {
-                    query.errorMsg = error.message;
-                  } else query.errorMsg = 'Unknown Error during writing';
+                    query.status = error.message;
+                  } else query.status = 'Unknown Error during writing';
                 }
               });
             }

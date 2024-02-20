@@ -54,7 +54,7 @@ export class MB_Controller {
   public write = (req: Request, res: Response, next: NextFunction): void => {
     try {
       // this.instance.mb_writeToDevice(req.id, req.tags, req.data);
-      // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
+      // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, data:req.data });
     } catch (error) {
       next(error);
     }
@@ -62,7 +62,8 @@ export class MB_Controller {
 
   public writeSync = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // await this.instance.mb_writeToDeviceSync(req.id, req.tags, req.data);
+      //const respQuery = await this.instance.mb_writeToDeviceSync(req.id, req.tags, req.data);
+      // const resp = { ...respQuery, data: req.data };
       // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
     } catch (error) {
       next(error);

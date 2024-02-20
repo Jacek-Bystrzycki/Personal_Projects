@@ -99,7 +99,8 @@ export class S7_ConnectToPlc extends S7_DataPLC {
               await this.s7_writeToPlc([tag.params]);
               tag.execute = false;
               tag.isError = false;
-              tag.status = 'Done';
+              tag.status = 'Async Write Done';
+              this._writeBufferConsistent[index].status = tag.status;
             } else {
               throw new InternalError(this._readBuffer[index].status);
             }
@@ -108,7 +109,11 @@ export class S7_ConnectToPlc extends S7_DataPLC {
             tag.isError = true;
             if (error instanceof InternalError) {
               tag.status = error.message;
-            } else tag.status = 'Unknown error';
+              this._writeBufferConsistent[index].status = tag.status;
+            } else {
+              tag.status = 'Unknown error';
+              this._writeBufferConsistent[index].status = tag.status;
+            }
           }
         }
       });
@@ -121,17 +126,18 @@ export class S7_ConnectToPlc extends S7_DataPLC {
       //============================ WRITE SYNC ===================
       this._syncQueue.forEach(async (query) => {
         if (!query.isDone && !query.isError) {
-          const dataToWrite: snap7.MultiVarWrite[] = query.indexes.map((index, i) => {
+          const dataToWrite: snap7.MultiVarWrite[] = query.tags.map((index, i) => {
             return { ...this._writeBufferSync[index - 1].params, Data: query.data[i] };
           });
           try {
             await this.s7_writeToPlc(dataToWrite);
+            query.status = 'Query Done';
             query.isDone = true;
           } catch (error) {
             query.isError = true;
             if (error instanceof InternalError) {
-              query.errorMsg = error.message;
-            } else query.errorMsg = 'Unknown Error during writing';
+              query.status = error.message;
+            } else query.status = 'Unknown Error during writing';
           }
         }
       });
