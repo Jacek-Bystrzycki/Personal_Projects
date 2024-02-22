@@ -34,58 +34,59 @@ export const s7_formatReadData = (resp: S7_BeforeFormatRead[]): S7_AfterFormatRe
     });
 
     readTags.forEach((tag) => {
+      const currentTag: Buffer = resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!;
       switch (tag.wordLen) {
         case snap7.WordLen.S7WLBit:
           if (tag.format === 'Bit') {
-            tag.values = [...resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!];
+            tag.values = [...currentTag];
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
         case snap7.WordLen.S7WLByte:
           if (tag.format === 'Byte_As_BitArray') {
-            tag.values = bufferByteToBitArray(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!);
+            tag.values = bufferByteToBitArray(currentTag);
             break;
           }
           if (tag.format === 'Byte_As_Int') {
-            tag.values = bufferByteToInt(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!);
+            tag.values = bufferByteToInt(currentTag);
             break;
           }
           if (tag.format === 'Byte_As_Uint') {
-            tag.values = bufferByteToUInt(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!);
+            tag.values = bufferByteToUInt(currentTag);
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
         case snap7.WordLen.S7WLWord:
           if (tag.format === 'Word_As_BitArray') {
-            tag.values = bufferWordToBitArray(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!);
+            tag.values = bufferWordToBitArray(currentTag);
             break;
           }
           if (tag.format === 'Word_As_Int') {
-            tag.values = bufferWordToInt(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!);
+            tag.values = bufferWordToInt(currentTag);
             break;
           }
           if (tag.format === 'Word_As_Uint') {
-            tag.values = bufferWordToUInt(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!);
+            tag.values = bufferWordToUInt(currentTag);
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
         case snap7.WordLen.S7WLDWord:
           if (tag.format === 'Dword_As_BitArray') {
-            tag.values = bufferDWordToBitArray(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!);
+            tag.values = bufferDWordToBitArray(currentTag);
             break;
           }
           if (tag.format === 'Dword_As_Int') {
-            tag.values = bufferDwordToInt(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!);
+            tag.values = bufferDwordToInt(currentTag);
             break;
           }
           if (tag.format === 'Dword_As_Uint') {
-            tag.values = bufferDwordToUInt(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!);
+            tag.values = bufferDwordToUInt(currentTag);
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
         case snap7.WordLen.S7WLReal:
           if (tag.format === 'Real') {
-            tag.values = bufferRealToFloat(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!);
+            tag.values = bufferRealToFloat(currentTag);
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
@@ -98,7 +99,7 @@ export const s7_formatReadData = (resp: S7_BeforeFormatRead[]): S7_AfterFormatRe
   } else throw new BadRequestError('Empty data');
 };
 
-export const s7_formatWriteData = (id: number, writeTags: S7_BeforeFormatWrite[], data: Array<Array<number> | Array<Array<number>>>): S7_AfterFormatWrite => {
+export const s7_formatWriteData = (id: number, writeTags: S7_BeforeFormatWrite[]): S7_AfterFormatWrite => {
   const buffers: Buffer[] = [];
 
   writeTags.forEach((tag) => {
@@ -162,7 +163,7 @@ export const s7_formatWriteData = (id: number, writeTags: S7_BeforeFormatWrite[]
     }
   });
 
-  const respTags: S7_DataResponseWrite[] = buffers.map((data, index) => {
+  const respTags: S7_DataResponseWrite[] = buffers.map((data, index): S7_DataResponseWrite => {
     return { data, tagId: writeTags[index].id };
   });
 

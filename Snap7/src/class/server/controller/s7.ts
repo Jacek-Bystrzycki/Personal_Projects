@@ -62,7 +62,7 @@ export class S7_Controller {
     });
 
     try {
-      const data: S7_AfterFormatWrite = s7_formatWriteData(req.id[0], writeTags, req.data);
+      const data: S7_AfterFormatWrite = s7_formatWriteData(req.id[0], writeTags);
       this.instance.s7_writeData(data);
       res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, data: req.data });
     } catch (error) {
@@ -81,7 +81,7 @@ export class S7_Controller {
     });
 
     try {
-      const data: S7_AfterFormatWrite = s7_formatWriteData(req.id[0], writeTags, req.data);
+      const data: S7_AfterFormatWrite = s7_formatWriteData(req.id[0], writeTags);
       const respQuery = await this.instance.s7_writeDataSync(data);
       const resp = { ...respQuery, data: req.data };
       res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, resp });

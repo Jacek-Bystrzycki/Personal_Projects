@@ -10,6 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MB_Controller = void 0;
+const http_status_codes_1 = require("http-status-codes");
+const get_date_as_string_1 = require("../../../utils/get-date-as-string");
 const errors_1 = require("../../../types/server/errors");
 const verifyQueryParams_1 = require("./verifyQueryParams");
 const mb_formatData_1 = require("./mb-formatData");
@@ -54,16 +56,24 @@ class MB_Controller {
                 const resp = (0, mb_formatData_1.mb_formatReadData)(data);
                 res.mbTags = resp;
                 next();
-                // res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, data });
             }
             catch (error) {
                 next(error);
             }
         };
         this.write = (req, res, next) => {
+            const writeTags = req.tags[0].map((index, i) => {
+                return {
+                    len: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).params.len,
+                    format: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).format,
+                    id: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).id,
+                    data: req.data[i],
+                };
+            });
             try {
-                // this.instance.mb_writeToDevice(req.id, req.tags, req.data);
-                // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
+                const data = (0, mb_formatData_1.mb_formatWriteData)(req.id[0], writeTags);
+                this.instance.mb_writeToDevice(data);
+                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data: req.data });
             }
             catch (error) {
                 next(error);
@@ -71,7 +81,8 @@ class MB_Controller {
         };
         this.writeSync = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             try {
-                // await this.instance.mb_writeToDeviceSync(req.id, req.tags, req.data);
+                //const respQuery = await this.instance.mb_writeToDeviceSync(req.id, req.tags, req.data);
+                // const resp = { ...respQuery, data: req.data };
                 // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
             }
             catch (error) {

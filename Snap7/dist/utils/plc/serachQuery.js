@@ -13,6 +13,6 @@ const searchQueueForError = (id, queue) => {
 exports.searchQueueForError = searchQueueForError;
 const searchQueueForErrorMsg = (id, queue) => {
     const findQuery = queue.find((query) => query.queryId === id);
-    return (findQuery === null || findQuery === void 0 ? void 0 : findQuery.errorMsg) || 'No message';
+    return (findQuery === null || findQuery === void 0 ? void 0 : findQuery.status) || 'No message';
 };
 exports.searchQueueForErrorMsg = searchQueueForErrorMsg;

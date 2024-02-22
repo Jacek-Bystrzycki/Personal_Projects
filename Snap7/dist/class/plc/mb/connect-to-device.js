@@ -97,19 +97,20 @@ class MB_ConnectToDevice {
                         //============ WRITE SYNC ======================
                         this._syncQueue.forEach((query) => {
                             if (!query.isDone && !query.isError) {
-                                query.indexes.forEach((index, i) => __awaiter(this, void 0, void 0, function* () {
+                                query.tags.forEach((index, i) => __awaiter(this, void 0, void 0, function* () {
                                     const dataToWrite = Object.assign(Object.assign({}, this._writeBuffer[index - 1].params), { data: query.data[i] });
                                     try {
                                         yield this.mb_WriteRegisters(dataToWrite);
+                                        query.status = 'Query Done';
                                         query.isDone = true;
                                     }
                                     catch (error) {
                                         query.isError = true;
                                         if (error instanceof errors_1.InternalError) {
-                                            query.errorMsg = error.message;
+                                            query.status = error.message;
                                         }
                                         else
-                                            query.errorMsg = 'Unknown Error during writing';
+                                            query.status = 'Unknown Error during writing';
                                     }
                                 }));
                             }

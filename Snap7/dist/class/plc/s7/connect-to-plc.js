@@ -93,7 +93,8 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                                 yield this.s7_writeToPlc([tag.params]);
                                 tag.execute = false;
                                 tag.isError = false;
-                                tag.status = 'Done';
+                                tag.status = 'Async Write Done';
+                                this._writeBufferConsistent[index].status = tag.status;
                             }
                             else {
                                 throw new errors_1.InternalError(this._readBuffer[index].status);
@@ -104,9 +105,12 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                             tag.isError = true;
                             if (error instanceof errors_1.InternalError) {
                                 tag.status = error.message;
+                                this._writeBufferConsistent[index].status = tag.status;
                             }
-                            else
+                            else {
                                 tag.status = 'Unknown error';
+                                this._writeBufferConsistent[index].status = tag.status;
+                            }
                         }
                     }
                 }));
@@ -119,20 +123,21 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                 //============================ WRITE SYNC ===================
                 this._syncQueue.forEach((query) => __awaiter(this, void 0, void 0, function* () {
                     if (!query.isDone && !query.isError) {
-                        const dataToWrite = query.indexes.map((index, i) => {
+                        const dataToWrite = query.tags.map((index, i) => {
                             return Object.assign(Object.assign({}, this._writeBufferSync[index - 1].params), { Data: query.data[i] });
                         });
                         try {
                             yield this.s7_writeToPlc(dataToWrite);
+                            query.status = 'Query Done';
                             query.isDone = true;
                         }
                         catch (error) {
                             query.isError = true;
                             if (error instanceof errors_1.InternalError) {
-                                query.errorMsg = error.message;
+                                query.status = error.message;
                             }
                             else
-                                query.errorMsg = 'Unknown Error during writing';
+                                query.status = 'Unknown Error during writing';
                         }
                     }
                 }));

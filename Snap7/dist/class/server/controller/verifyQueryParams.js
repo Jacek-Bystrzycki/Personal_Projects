@@ -7,9 +7,14 @@ const verifyParams = (req, instance) => {
     const { tags } = req.query;
     let idArr = [];
     if (id) {
-        idArr = id.split(',').map((id) => parseInt(id, 10));
-        if (!idArr.every((id) => !isNaN(id)))
-            throw new errors_1.BadRequestError("'Ids' needs to be a number");
+        try {
+            idArr = JSON.parse(id);
+        }
+        catch (error) {
+            throw new errors_1.BadRequestError("'Ids' needs to be an array of numbers");
+        }
+        if (!Array.isArray(idArr) || !idArr.every((id) => !isNaN(id)))
+            throw new errors_1.BadRequestError("'Ids' needs to be an array of numbers");
         idArr.forEach((id) => {
             if (!instance.instances[id - 1])
                 throw new errors_1.BadRequestError(`Instance ${id} not exists`);
@@ -26,15 +31,13 @@ const verifyParams = (req, instance) => {
         if (typeof tags !== 'string')
             throw new errors_1.BadRequestError("'tags' missing in query");
         try {
-            {
-                const tempTags = tags.split(';').map((item) => {
-                    return JSON.parse(item);
-                });
-                numTags = tempTags;
-            }
+            const tempTags = JSON.parse(tags);
+            if (!Array.isArray(tempTags) || !tempTags.every((item) => Array.isArray(item)))
+                throw new errors_1.BadRequestError('Tags needs to ba an array of array of numbers');
+            numTags = tempTags;
         }
         catch (error) {
-            throw new errors_1.BadRequestError('Tags needs to ba array of numbers');
+            throw new errors_1.BadRequestError('Tags needs to ba an array of array of numbers');
         }
         if (numTags.length !== idArr.length)
             throw new errors_1.BadRequestError('Wrong amount of tags');

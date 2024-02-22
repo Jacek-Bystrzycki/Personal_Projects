@@ -5,8 +5,7 @@ exports.bufferRealToFloat = exports.bufferDwordToUInt = exports.bufferDwordToInt
 const bufferByteToBitArray = (data) => {
     if (data.length > 0) {
         const bits = [];
-        const bitsAmount = data.length;
-        for (let i = 0; i < bitsAmount; i++) {
+        for (let i = 0; i < data.length; i++) {
             const buf = Buffer.copyBytesFrom(data, i * 1, 1);
             const respString = buf.readUInt8().toString(2);
             const lenDiff = 8 - buf.readUInt8().toString(2).length;
@@ -26,8 +25,7 @@ exports.bufferByteToBitArray = bufferByteToBitArray;
 const bufferWordToBitArray = (data) => {
     if (data.length > 1) {
         const bits = [];
-        const bitsAmount = data.length / 2;
-        for (let i = 0; i < bitsAmount; i++) {
+        for (let i = 0; i < data.length; i += 2) {
             const buf = Buffer.copyBytesFrom(data, i * 1, 2);
             const respString = buf.readUInt16BE().toString(2);
             const lenDiff = 16 - buf.readUInt16BE().toString(2).length;
@@ -37,9 +35,7 @@ const bufferWordToBitArray = (data) => {
                 return respString[index - lenDiff] === '1' ? 1 : 0;
             });
             const word = bitArray.reverse();
-            const byteZero = word.slice(0, 8);
-            const byteOne = word.slice(8, 16);
-            bits.push([...byteOne, ...byteZero]);
+            bits.push([...word]);
         }
         return bits;
     }
@@ -50,8 +46,7 @@ exports.bufferWordToBitArray = bufferWordToBitArray;
 const bufferDWordToBitArray = (data) => {
     if (data.length > 3) {
         const bits = [];
-        const bitsAmount = data.length / 4;
-        for (let i = 0; i < bitsAmount; i++) {
+        for (let i = 0; i < data.length; i += 4) {
             const buf = Buffer.copyBytesFrom(data, i * 1, 4);
             const respString = buf.readUInt32BE().toString(2);
             const lenDiff = 32 - buf.readUInt32BE().toString(2).length;
@@ -61,13 +56,7 @@ const bufferDWordToBitArray = (data) => {
                 return respString[index - lenDiff] === '1' ? 1 : 0;
             });
             const dword = bitArray.reverse();
-            const byteZero = dword.slice(0, 8);
-            const byteOne = dword.slice(8, 16);
-            const byteTwo = dword.slice(16, 24);
-            const byteThree = dword.slice(24, 32);
-            const wordZero = [...byteOne, ...byteZero];
-            const wordTwo = [...byteThree, ...byteTwo];
-            bits.push([...wordTwo, ...wordZero].flat());
+            bits.push([...dword]);
         }
         return bits;
     }

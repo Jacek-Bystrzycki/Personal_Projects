@@ -4,8 +4,8 @@ import { getDateAsString } from '../../../utils/get-date-as-string';
 import { BadRequestError } from '../../../types/server/errors';
 import type { MB_CreateConnections } from '../../plc/mb/create-mb-connection';
 import { verifyParams } from './verifyQueryParams';
-import type { MB_BeforeFormatRead, MB_AfterFormatRead } from '../../../types/plc/mb/request';
-import { mb_formatReadData } from './mb-formatData';
+import type { MB_BeforeFormatRead, MB_AfterFormatRead, MB_BeforeFormatWrite, MB_AfterFormatWrite } from '../../../types/plc/mb/request';
+import { mb_formatReadData, mb_formatWriteData } from './mb-formatData';
 
 export class MB_Controller {
   constructor(private readonly instance: MB_CreateConnections) {}
@@ -45,16 +45,25 @@ export class MB_Controller {
       const resp: MB_AfterFormatRead[] = mb_formatReadData(data);
       res.mbTags = resp;
       next();
-      // res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, data });
     } catch (error) {
       next(error);
     }
   };
 
   public write = (req: Request, res: Response, next: NextFunction): void => {
+    const writeTags: MB_BeforeFormatWrite[] = req.tags[0].map((index, i) => {
+      return {
+        len: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.len,
+        format: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
+        id: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
+        data: req.data[i],
+      };
+    });
+
     try {
-      // this.instance.mb_writeToDevice(req.id, req.tags, req.data);
-      // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, data:req.data });
+      const data: MB_AfterFormatWrite = mb_formatWriteData(req.id[0], writeTags);
+      this.instance.mb_writeToDevice(data);
+      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, data: req.data });
     } catch (error) {
       next(error);
     }

@@ -1,6 +1,7 @@
-import type { MB_BeforeFormatRead, MB_AfterFormatRead } from '../../../types/plc/mb/request';
+import type { MB_BeforeFormatRead, MB_AfterFormatRead, MB_AfterFormatWrite, MB_BeforeFormatWrite, MB_DataResponseWrite } from '../../../types/plc/mb/request';
 import { BadRequestError } from '../../../types/server/errors';
 import { mbWordToBit, mbWordToBitArray, mbWordToUint, mbWordToInt, mbDwordToFloat, mbDwordToFloatInverted } from '../../../utils/plc/mb/mb-to-data';
+import { mbIntToWord, mbUintToWord, mbFloatToDword, mbFloatInvertedToDword } from '../../../utils/plc/mb/data-to-mb';
 
 export const mb_formatReadData = (resp: MB_BeforeFormatRead[]): MB_AfterFormatRead[] => {
   if (resp) {
@@ -9,11 +10,12 @@ export const mb_formatReadData = (resp: MB_BeforeFormatRead[]): MB_AfterFormatRe
     });
 
     readTags.forEach((tag) => {
+      const currentTag: number[] = resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data!;
       switch (tag.len) {
         case 'Bit':
           if (tag.format === 'Bit') {
             tag.values = mbWordToBit(
-              resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data as number[],
+              currentTag,
               resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.address.holdingRegister!
             );
             break;
@@ -21,25 +23,25 @@ export const mb_formatReadData = (resp: MB_BeforeFormatRead[]): MB_AfterFormatRe
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
         case 'Word':
           if (tag.format === 'Word_As_BitArray') {
-            tag.values = mbWordToBitArray(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data as number[]);
+            tag.values = mbWordToBitArray(currentTag);
             break;
           }
           if (tag.format === 'Word_As_Int') {
-            tag.values = mbWordToInt(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data as number[]);
+            tag.values = mbWordToInt(currentTag);
             break;
           }
           if (tag.format === 'Word_As_Uint') {
-            tag.values = mbWordToUint(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data as number[]);
+            tag.values = mbWordToUint(currentTag);
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
         case 'Dword':
           if (tag.format === 'Float') {
-            tag.values = mbDwordToFloat(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data as number[]);
+            tag.values = mbDwordToFloat(currentTag);
             break;
           }
           if (tag.format === 'FloatInverted') {
-            tag.values = mbDwordToFloatInverted(resp.find((resp) => resp.id === tag.id && resp.address.deviceId === tag.address.deviceId)?.data as number[]);
+            tag.values = mbDwordToFloatInverted(currentTag);
             break;
           }
           throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
@@ -52,4 +54,49 @@ export const mb_formatReadData = (resp: MB_BeforeFormatRead[]): MB_AfterFormatRe
   } else {
     throw new BadRequestError('Empty data');
   }
+};
+
+export const mb_formatWriteData = (id: number, writeTags: MB_BeforeFormatWrite[]): MB_AfterFormatWrite => {
+  const values: number[][] = [];
+
+  writeTags.forEach((tag) => {
+    switch (tag.len) {
+      case 'Bit':
+        if (tag.format == 'Bit') {
+          break;
+        }
+        throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
+      case 'Word':
+        if (tag.format === 'Word_As_BitArray') {
+          break;
+        }
+        if (tag.format === 'Word_As_Int') {
+          values.push(mbIntToWord(tag.data as number[]));
+          break;
+        }
+        if (tag.format === 'Word_As_Uint') {
+          values.push(mbUintToWord(tag.data as number[]));
+          break;
+        }
+        throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
+      case 'Dword':
+        if (tag.format === 'Float') {
+          values.push(mbFloatToDword(tag.data as number[]));
+          break;
+        }
+        if (tag.format === 'FloatInverted') {
+          values.push(mbFloatInvertedToDword(tag.data as number[]));
+          break;
+        }
+        throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
+      default:
+        throw new BadRequestError('Unsupported data type');
+    }
+  });
+
+  const respTags: MB_DataResponseWrite[] = values.map((data, index): MB_DataResponseWrite => {
+    return { data, tagId: writeTags[index].id };
+  });
+  const resp: MB_AfterFormatWrite = { instanceId: id, writeTags: respTags };
+  return resp;
 };

@@ -1,8 +1,8 @@
 import { MB_ConnectToDevice } from './connect-to-device';
 import { MB_DeviceInstance } from '../../../types/plc/mb/mb-instances';
 import { MB_ConnectionParamType } from '../../../types/plc/mb/conn-params';
-import { BadRequestError, InternalError } from '../../../types/server/errors';
-import { MB_BeforeFormatRead } from '../../../types/plc/mb/request';
+import { InternalError } from '../../../types/server/errors';
+import { MB_BeforeFormatRead, MB_AfterFormatWrite } from '../../../types/plc/mb/request';
 import { nanoid } from 'nanoid';
 import type { MB_SyncQuery } from '../../../types/plc/mb/syncQuery';
 import { searchQueueForDone, searchQueueForError, searchQueueForErrorMsg } from '../../../utils/plc/serachQuery';
@@ -27,19 +27,19 @@ export class MB_CreateConnections {
 
     id.forEach((singleId, index) => {
       tags[index].forEach((tag) => {
+        const currentTag = this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!;
         const data: MB_BeforeFormatRead = {
-          isError: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.isError,
-          status: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.status,
-          data: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.data,
-          id: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.id,
-          len: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.len,
-          format: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.format,
+          isError: currentTag.isError,
+          status: currentTag.status,
+          data: currentTag.data,
+          id: currentTag.id,
+          len: currentTag.params.len,
+          format: currentTag.format,
           address: {
             deviceId: singleId,
             type: 'mb',
-            holdingRegister: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params
-              .start,
-            amount: this._instances.find((id) => id.id === singleId)!.instance.readBufferConsistent.find((searchTag) => searchTag.id === tag)!.params.count,
+            holdingRegister: currentTag.params.start,
+            amount: currentTag.params.count,
           },
         };
         resp.push(data);
@@ -49,15 +49,16 @@ export class MB_CreateConnections {
     return resp;
   };
 
-  public mb_writeToDevice = (id: number, indexes: number[], dataToWrite: number[][]): void => {
-    const dataIndex: number = this._instances.findIndex((item) => item.id === id);
-    if (dataIndex === -1) throw new BadRequestError(`Instance ${id} not exists`);
+  public mb_writeToDevice = (dataToWrite: MB_AfterFormatWrite): void => {
+    const idIndex: number = this._instances.findIndex((instance) => instance.id === dataToWrite.instanceId);
 
-    indexes.forEach((index, i) => {
-      if (this._instances[dataIndex].instance.readBufferConsistent[index - 1].isError)
-        throw new InternalError(this._instances[dataIndex].instance.writeBufferConsistent[index - 1].status);
-      this._instances[dataIndex].instance.writeBufferConsistent[index - 1].execute = true;
-      this._instances[dataIndex].instance.writeBufferConsistent[index - 1].params.data = dataToWrite[i];
+    dataToWrite.writeTags.forEach((tag) => {
+      const tagIndex = this._instances[idIndex].instance.writeBufferConsistent.findIndex((searchTag) => searchTag.id === tag.tagId);
+      if (this._instances[idIndex].instance.readBufferConsistent[tagIndex].isError)
+        throw new InternalError(this._instances[idIndex].instance.writeBufferConsistent[tagIndex].status);
+
+      this._instances[idIndex].instance.writeBufferConsistent[tagIndex].execute = true;
+      this._instances[idIndex].instance.writeBufferConsistent[tagIndex].params.data = tag.data;
     });
   };
 
