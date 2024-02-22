@@ -182,10 +182,11 @@ export class MB_ConnectToDevice {
   };
 
   public mb_WriteRegisters = async (params: Pick<MB_Params, 'area' | 'len' | 'start' | 'data'>): Promise<void> => {
-    const { start, data } = params;
+    const { start, data, len } = params;
+    const startNo: number = len === 'Bit' ? Math.floor(start / 16) : start;
     const promise = new Promise<void>((resolve, reject) => {
       this._client
-        .writeMultipleRegisters(start, data)
+        .writeMultipleRegisters(startNo, data)
         .then(() => {
           resolve();
         })

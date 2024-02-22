@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.mb_formatWriteData = exports.mb_formatReadData = void 0;
 const errors_1 = require("../../../types/server/errors");
 const mb_to_data_1 = require("../../../utils/plc/mb/mb-to-data");
+const data_to_mb_1 = require("../../../utils/plc/mb/data-to-mb");
 const mb_formatReadData = (resp) => {
     if (resp) {
         const readTags = resp.map((tag) => {
@@ -59,25 +60,33 @@ const mb_formatWriteData = (id, writeTags) => {
         switch (tag.len) {
             case 'Bit':
                 if (tag.format == 'Bit') {
+                    const currWord = (0, mb_to_data_1.mbWordToBitArray)(tag.bitDataForRead)[0];
+                    const tempArr = (0, data_to_mb_1.mbBitToWordBit)(tag.data, currWord, tag.startAddForRead);
+                    values.push((0, data_to_mb_1.mb16bitArrayToWord)(tempArr));
                     break;
                 }
                 throw new errors_1.BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
             case 'Word':
                 if (tag.format === 'Word_As_BitArray') {
+                    values.push((0, data_to_mb_1.mb16bitArrayToWord)(tag.data));
                     break;
                 }
                 if (tag.format === 'Word_As_Int') {
+                    values.push((0, data_to_mb_1.mbIntToWord)(tag.data));
                     break;
                 }
                 if (tag.format === 'Word_As_Uint') {
+                    values.push((0, data_to_mb_1.mbUintToWord)(tag.data));
                     break;
                 }
                 throw new errors_1.BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
             case 'Dword':
                 if (tag.format === 'Float') {
+                    values.push((0, data_to_mb_1.mbFloatToDword)(tag.data));
                     break;
                 }
                 if (tag.format === 'FloatInverted') {
+                    values.push((0, data_to_mb_1.mbFloatInvertedToDword)(tag.data));
                     break;
                 }
                 throw new errors_1.BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);

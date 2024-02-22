@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Universal_Controller = void 0;
 const s7_formatData_1 = require("./s7-formatData");
+const mb_formatData_1 = require("./mb-formatData");
 class Universal_Controller {
     constructor(devices) {
         this.devices = devices;
@@ -23,6 +24,17 @@ class Universal_Controller {
                 }
                 //================== MB ===================
                 if (this.devices.mb_definitions) {
+                    const mb_ids = this.devices.mb_definitions.instances.map((instance) => {
+                        return instance.id;
+                    });
+                    const mb_tags = this.devices.mb_definitions.instances.map((instance) => {
+                        return instance.instance.readBufferConsistent.map((tag) => {
+                            return tag.id;
+                        });
+                    });
+                    const mb_tagsBefore = this.devices.mb_definitions.mb_readFromDevice(mb_ids, mb_tags);
+                    const mb_tagAfter = (0, mb_formatData_1.mb_formatReadData)(mb_tagsBefore);
+                    res.mbTags = mb_tagAfter;
                 }
                 next();
             }

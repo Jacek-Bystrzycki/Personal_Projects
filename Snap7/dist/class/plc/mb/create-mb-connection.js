@@ -60,19 +60,19 @@ class MB_CreateConnections {
                 this._instances[idIndex].instance.writeBufferConsistent[tagIndex].params.data = tag.data;
             });
         };
-        this.mb_writeToDeviceSync = (id, indexes, dataToWrite) => __awaiter(this, void 0, void 0, function* () {
-            const dataIndex = this._instances.findIndex((instance) => instance.id === id);
+        this.mb_writeToDeviceSync = (dataToWrite) => __awaiter(this, void 0, void 0, function* () {
+            const idIndex = this._instances.findIndex((instance) => instance.id === dataToWrite.instanceId);
             const query = {
                 queryId: (0, nanoid_1.nanoid)(),
-                tags: indexes,
-                data: dataToWrite,
+                tags: dataToWrite.writeTags.map((tag) => tag.tagId),
+                data: dataToWrite.writeTags.map((tag) => tag.data),
                 isDone: false,
                 isError: false,
                 status: 'Not triggered',
             };
-            this._instances[dataIndex].instance.addToSyncQueue(query);
+            this._instances[idIndex].instance.addToSyncQueue(query);
             try {
-                yield (0, waitUntil_1.waitUntil)(() => (0, serachQuery_1.searchQueueForDone)(query.queryId, this._instances[dataIndex].instance.syncQueue), () => (0, serachQuery_1.searchQueueForError)(query.queryId, this._instances[dataIndex].instance.syncQueue), () => (0, serachQuery_1.searchQueueForErrorMsg)(query.queryId, this._instances[dataIndex].instance.syncQueue));
+                yield (0, waitUntil_1.waitUntil)(() => (0, serachQuery_1.searchQueueForDone)(query.queryId, this._instances[idIndex].instance.syncQueue), () => (0, serachQuery_1.searchQueueForError)(query.queryId, this._instances[idIndex].instance.syncQueue), () => (0, serachQuery_1.searchQueueForErrorMsg)(query.queryId, this._instances[idIndex].instance.syncQueue));
                 return {
                     queryId: query.queryId,
                     isDone: query.isDone,
@@ -87,7 +87,7 @@ class MB_CreateConnections {
                     throw new errors_1.InternalError('Unknown error');
             }
             finally {
-                this._instances[dataIndex].instance.removeFromSyncQueue(query.queryId);
+                this._instances[idIndex].instance.removeFromSyncQueue(query.queryId);
             }
         });
         this._instances = this.createConnections();

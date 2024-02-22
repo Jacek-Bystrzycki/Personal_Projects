@@ -51,15 +51,19 @@ export class S7_Controller {
     }
   };
 
-  public write = (req: Request, res: Response, next: NextFunction): void => {
-    const writeTags: S7_BeforeFormatWrite[] = req.tags[0].map((index, i) => {
+  private prepareWriteTags = (tags: number[], instanceId: number, data: number[][]): S7_BeforeFormatWrite[] => {
+    return tags.map((index, i) => {
       return {
-        type: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.WordLen,
-        format: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
-        id: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
-        data: req.data[i],
+        type: this.instance.instances.find((id) => id.id === instanceId)!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.WordLen,
+        format: this.instance.instances.find((id) => id.id === instanceId)!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
+        id: this.instance.instances.find((id) => id.id === instanceId)!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
+        data: data[i],
       };
     });
+  };
+
+  public write = (req: Request, res: Response, next: NextFunction): void => {
+    const writeTags: S7_BeforeFormatWrite[] = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
 
     try {
       const data: S7_AfterFormatWrite = s7_formatWriteData(req.id[0], writeTags);
@@ -71,14 +75,7 @@ export class S7_Controller {
   };
 
   public writeSync = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const writeTags: S7_BeforeFormatWrite[] = req.tags[0].map((index, i) => {
-      return {
-        type: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.WordLen,
-        format: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
-        id: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
-        data: req.data[i],
-      };
-    });
+    const writeTags: S7_BeforeFormatWrite[] = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
 
     try {
       const data: S7_AfterFormatWrite = s7_formatWriteData(req.id[0], writeTags);

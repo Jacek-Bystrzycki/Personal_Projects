@@ -50,15 +50,27 @@ export class MB_Controller {
     }
   };
 
-  public write = (req: Request, res: Response, next: NextFunction): void => {
-    const writeTags: MB_BeforeFormatWrite[] = req.tags[0].map((index, i) => {
+  private prepareWriteTags = (tags: number[], instanceId: number, data: number[][]): MB_BeforeFormatWrite[] => {
+    return tags.map((index, i) => {
       return {
-        len: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.len,
-        format: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
-        id: this.instance.instances.find((id) => id.id === req.id[0])!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
-        data: req.data[i],
+        len: this.instance.instances.find((id) => id.id === instanceId)!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.params.len,
+        format: this.instance.instances.find((id) => id.id === instanceId)!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.format,
+        id: this.instance.instances.find((id) => id.id === instanceId)!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.id,
+        data: data[i],
+        bitDataForRead:
+          this.instance.instances.find((id) => id.id === instanceId)!.instance.writeBufferConsistent.find((tag) => tag.id === index)?.format === 'Bit'
+            ? this.instance.instances.find((id) => id.id === instanceId)?.instance.readBufferConsistent.find((tag) => tag.id === index)?.data
+            : undefined,
+        startAddForRead:
+          this.instance.instances.find((id) => id.id === instanceId)!.instance.writeBufferConsistent.find((tag) => tag.id === index)?.format === 'Bit'
+            ? this.instance.instances.find((id) => id.id === instanceId)?.instance.readBufferConsistent.find((tag) => tag.id === index)?.params.start
+            : undefined,
       };
     });
+  };
+
+  public write = (req: Request, res: Response, next: NextFunction): void => {
+    const writeTags: MB_BeforeFormatWrite[] = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
 
     try {
       const data: MB_AfterFormatWrite = mb_formatWriteData(req.id[0], writeTags);
@@ -70,10 +82,13 @@ export class MB_Controller {
   };
 
   public writeSync = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const writeTags: MB_BeforeFormatWrite[] = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
+
     try {
-      //const respQuery = await this.instance.mb_writeToDeviceSync(req.id, req.tags, req.data);
-      // const resp = { ...respQuery, data: req.data };
-      // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
+      const data: MB_AfterFormatWrite = mb_formatWriteData(req.id[0], writeTags);
+      const respQuery = await this.instance.mb_writeToDeviceSync(data);
+      const resp = { ...respQuery, data: req.data };
+      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, resp });
     } catch (error) {
       next(error);
     }

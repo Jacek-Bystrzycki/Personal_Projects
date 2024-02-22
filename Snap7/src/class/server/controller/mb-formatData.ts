@@ -1,7 +1,7 @@
 import type { MB_BeforeFormatRead, MB_AfterFormatRead, MB_AfterFormatWrite, MB_BeforeFormatWrite, MB_DataResponseWrite } from '../../../types/plc/mb/request';
 import { BadRequestError } from '../../../types/server/errors';
 import { mbWordToBit, mbWordToBitArray, mbWordToUint, mbWordToInt, mbDwordToFloat, mbDwordToFloatInverted } from '../../../utils/plc/mb/mb-to-data';
-import { mbIntToWord, mbUintToWord, mbFloatToDword, mbFloatInvertedToDword } from '../../../utils/plc/mb/data-to-mb';
+import { mbBitToWordBit, mb16bitArrayToWord, mbIntToWord, mbUintToWord, mbFloatToDword, mbFloatInvertedToDword } from '../../../utils/plc/mb/data-to-mb';
 
 export const mb_formatReadData = (resp: MB_BeforeFormatRead[]): MB_AfterFormatRead[] => {
   if (resp) {
@@ -63,11 +63,15 @@ export const mb_formatWriteData = (id: number, writeTags: MB_BeforeFormatWrite[]
     switch (tag.len) {
       case 'Bit':
         if (tag.format == 'Bit') {
+          const currWord = mbWordToBitArray(tag.bitDataForRead!)[0];
+          const tempArr: number[][] = mbBitToWordBit(tag.data as number[], currWord, tag.startAddForRead!);
+          values.push(mb16bitArrayToWord(tempArr as number[][]));
           break;
         }
         throw new BadRequestError(`Tag No: ${tag.id} cannot be formatted as ${tag.format}`);
       case 'Word':
         if (tag.format === 'Word_As_BitArray') {
+          values.push(mb16bitArrayToWord(tag.data as number[][]));
           break;
         }
         if (tag.format === 'Word_As_Int') {

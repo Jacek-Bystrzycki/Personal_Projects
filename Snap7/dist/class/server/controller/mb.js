@@ -61,15 +61,25 @@ class MB_Controller {
                 next(error);
             }
         };
-        this.write = (req, res, next) => {
-            const writeTags = req.tags[0].map((index, i) => {
+        this.prepareWriteTags = (tags, instanceId, data) => {
+            return tags.map((index, i) => {
+                var _a, _b, _c, _d, _e, _f;
                 return {
-                    len: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).params.len,
-                    format: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).format,
-                    id: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).id,
-                    data: req.data[i],
+                    len: this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index).params.len,
+                    format: this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index).format,
+                    id: this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index).id,
+                    data: data[i],
+                    bitDataForRead: ((_a = this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index)) === null || _a === void 0 ? void 0 : _a.format) === 'Bit'
+                        ? (_c = (_b = this.instance.instances.find((id) => id.id === instanceId)) === null || _b === void 0 ? void 0 : _b.instance.readBufferConsistent.find((tag) => tag.id === index)) === null || _c === void 0 ? void 0 : _c.data
+                        : undefined,
+                    startAddForRead: ((_d = this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index)) === null || _d === void 0 ? void 0 : _d.format) === 'Bit'
+                        ? (_f = (_e = this.instance.instances.find((id) => id.id === instanceId)) === null || _e === void 0 ? void 0 : _e.instance.readBufferConsistent.find((tag) => tag.id === index)) === null || _f === void 0 ? void 0 : _f.params.start
+                        : undefined,
                 };
             });
+        };
+        this.write = (req, res, next) => {
+            const writeTags = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
             try {
                 const data = (0, mb_formatData_1.mb_formatWriteData)(req.id[0], writeTags);
                 this.instance.mb_writeToDevice(data);
@@ -80,10 +90,12 @@ class MB_Controller {
             }
         };
         this.writeSync = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const writeTags = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
             try {
-                //const respQuery = await this.instance.mb_writeToDeviceSync(req.id, req.tags, req.data);
-                // const resp = { ...respQuery, data: req.data };
-                // res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success` });
+                const data = (0, mb_formatData_1.mb_formatWriteData)(req.id[0], writeTags);
+                const respQuery = yield this.instance.mb_writeToDeviceSync(data);
+                const resp = Object.assign(Object.assign({}, respQuery), { data: req.data });
+                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, resp });
             }
             catch (error) {
                 next(error);

@@ -61,15 +61,18 @@ class S7_Controller {
                 next(error);
             }
         };
-        this.write = (req, res, next) => {
-            const writeTags = req.tags[0].map((index, i) => {
+        this.prepareWriteTags = (tags, instanceId, data) => {
+            return tags.map((index, i) => {
                 return {
-                    type: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).params.WordLen,
-                    format: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).format,
-                    id: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).id,
-                    data: req.data[i],
+                    type: this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index).params.WordLen,
+                    format: this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index).format,
+                    id: this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index).id,
+                    data: data[i],
                 };
             });
+        };
+        this.write = (req, res, next) => {
+            const writeTags = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
             try {
                 const data = (0, s7_formatData_1.s7_formatWriteData)(req.id[0], writeTags);
                 this.instance.s7_writeData(data);
@@ -80,14 +83,7 @@ class S7_Controller {
             }
         };
         this.writeSync = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-            const writeTags = req.tags[0].map((index, i) => {
-                return {
-                    type: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).params.WordLen,
-                    format: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).format,
-                    id: this.instance.instances.find((id) => id.id === req.id[0]).instance.writeBufferConsistent.find((tag) => tag.id === index).id,
-                    data: req.data[i],
-                };
-            });
+            const writeTags = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
             try {
                 const data = (0, s7_formatData_1.s7_formatWriteData)(req.id[0], writeTags);
                 const respQuery = yield this.instance.s7_writeDataSync(data);

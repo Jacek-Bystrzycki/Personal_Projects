@@ -34,6 +34,8 @@ export type MB_BeforeFormatWrite = {
   data: number[] | number[][];
   id: number;
   format: MB_Format;
+  bitDataForRead?: number[];
+  startAddForRead?: number;
 };
 
 export type MB_DataResponseWrite = {

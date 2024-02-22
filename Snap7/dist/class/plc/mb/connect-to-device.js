@@ -169,10 +169,11 @@ class MB_ConnectToDevice {
             return Promise.race([promise, timeout]);
         });
         this.mb_WriteRegisters = (params) => __awaiter(this, void 0, void 0, function* () {
-            const { start, data } = params;
+            const { start, data, len } = params;
+            const startNo = len === 'Bit' ? Math.floor(start / 16) : start;
             const promise = new Promise((resolve, reject) => {
                 this._client
-                    .writeMultipleRegisters(start, data)
+                    .writeMultipleRegisters(startNo, data)
                     .then(() => {
                     resolve();
                 })

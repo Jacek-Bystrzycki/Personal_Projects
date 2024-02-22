@@ -62,25 +62,25 @@ export class MB_CreateConnections {
     });
   };
 
-  public mb_writeToDeviceSync = async (id: number, indexes: number[], dataToWrite: number[][]): Promise<Partial<MB_SyncQuery>> => {
-    const dataIndex: number = this._instances.findIndex((instance) => instance.id === id);
+  public mb_writeToDeviceSync = async (dataToWrite: MB_AfterFormatWrite): Promise<Partial<MB_SyncQuery>> => {
+    const idIndex: number = this._instances.findIndex((instance) => instance.id === dataToWrite.instanceId);
 
     const query: MB_SyncQuery = {
       queryId: nanoid(),
-      tags: indexes,
-      data: dataToWrite,
+      tags: dataToWrite.writeTags.map((tag) => tag.tagId),
+      data: dataToWrite.writeTags.map((tag) => tag.data),
       isDone: false,
       isError: false,
       status: 'Not triggered',
     };
 
-    this._instances[dataIndex].instance.addToSyncQueue(query);
+    this._instances[idIndex].instance.addToSyncQueue(query);
 
     try {
       await waitUntil(
-        () => searchQueueForDone(query.queryId, this._instances[dataIndex].instance.syncQueue),
-        () => searchQueueForError(query.queryId, this._instances[dataIndex].instance.syncQueue),
-        () => searchQueueForErrorMsg(query.queryId, this._instances[dataIndex].instance.syncQueue)
+        () => searchQueueForDone(query.queryId, this._instances[idIndex].instance.syncQueue),
+        () => searchQueueForError(query.queryId, this._instances[idIndex].instance.syncQueue),
+        () => searchQueueForErrorMsg(query.queryId, this._instances[idIndex].instance.syncQueue)
       );
       return {
         queryId: query.queryId,
@@ -92,7 +92,7 @@ export class MB_CreateConnections {
       if (typeof error === 'string') throw new InternalError(error);
       else throw new InternalError('Unknown error');
     } finally {
-      this._instances[dataIndex].instance.removeFromSyncQueue(query.queryId);
+      this._instances[idIndex].instance.removeFromSyncQueue(query.queryId);
     }
   };
 
