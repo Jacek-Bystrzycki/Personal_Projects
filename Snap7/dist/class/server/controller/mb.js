@@ -63,7 +63,7 @@ class MB_Controller {
         };
         this.prepareWriteTags = (tags, instanceId, data) => {
             return tags.map((index, i) => {
-                var _a, _b, _c, _d, _e, _f;
+                var _a, _b, _c, _d;
                 return {
                     len: this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index).params.len,
                     format: this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index).format,
@@ -72,8 +72,8 @@ class MB_Controller {
                     bitDataForRead: ((_a = this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index)) === null || _a === void 0 ? void 0 : _a.format) === 'Bit'
                         ? (_c = (_b = this.instance.instances.find((id) => id.id === instanceId)) === null || _b === void 0 ? void 0 : _b.instance.readBufferConsistent.find((tag) => tag.id === index)) === null || _c === void 0 ? void 0 : _c.data
                         : undefined,
-                    startAddForRead: ((_d = this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index)) === null || _d === void 0 ? void 0 : _d.format) === 'Bit'
-                        ? (_f = (_e = this.instance.instances.find((id) => id.id === instanceId)) === null || _e === void 0 ? void 0 : _e.instance.readBufferConsistent.find((tag) => tag.id === index)) === null || _f === void 0 ? void 0 : _f.params.start
+                    startAddForRead: this.instance.instances.find((id) => id.id === instanceId).instance.writeBufferConsistent.find((tag) => tag.id === index).format === 'Bit'
+                        ? (_d = this.instance.instances.find((id) => id.id === instanceId)) === null || _d === void 0 ? void 0 : _d.instance.readBufferConsistent.find((tag) => tag.id === index).params.start
                         : undefined,
                 };
             });

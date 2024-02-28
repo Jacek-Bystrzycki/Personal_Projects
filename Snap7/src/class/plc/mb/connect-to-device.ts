@@ -1,6 +1,4 @@
 import { Socket, SocketConnectOpts } from 'net';
-import { SerialPort, SerialPortOpenOptions } from 'serialport';
-import { AutoDetectTypes } from '@serialport/bindings-cpp';
 import Modbus = require('jsmodbus');
 import { InternalError } from '../../../types/server/errors';
 import { setIntervalAsync } from 'set-interval-async/fixed';
@@ -10,9 +8,6 @@ import type { MB_SyncQuery } from '../../../types/plc/mb/syncQuery';
 import type { MB_Params } from '../../../types/plc/mb/format';
 
 export class MB_ConnectToDevice {
-  // private _serialOptions: SerialPortOpenOptions<AutoDetectTypes>;
-  // private _clientRtu: Modbus.ModbusRTUClient;
-  // private _socketSerial: SerialPort;
   private _socket: Socket;
   private _client: Modbus.ModbusTCPClient;
   private _readBuffer: MB_ReadTag[];
@@ -23,22 +18,6 @@ export class MB_ConnectToDevice {
   private _isConnected: boolean = false;
   private _connectCmd: boolean = false;
   constructor(private readonly options: SocketConnectOpts, private readonly uId: number, private readonly tagsDefs: MB_TagDef[]) {
-    // RTU
-    // SerialPort.list().then((ports) => ports.forEach((port) => console.log(port.path)));
-    // this._serialOptions = {
-    //   path: 'COM1',
-    //   baudRate: 9600,
-    //   parity: 'none',
-    //   dataBits: 8,
-    //   stopBits: 1,
-    // };
-    // this._socketSerial = new SerialPort(this._serialOptions);
-    // this._clientRtu = new Modbus.client.RTU(this._socketSerial, 1);
-    // this._socketSerial.on('error', console.error);
-    // this._socketSerial.on('open', () => {
-    //   this._clientRtu.readHoldingRegisters(0, 2);
-    // });
-    // TCP
     this._socket = new Socket();
     this._client = new Modbus.client.TCP(this._socket, this.uId);
     this._readBuffer = this.tagsDefs.map((tagDef): MB_ReadTag => {
@@ -72,7 +51,7 @@ export class MB_ConnectToDevice {
       try {
         if (this._isConnected) {
           //============ READ ASYNC ======================
-          this._readBuffer.forEach(async (tag, index) => {
+          for (const [index, tag] of this._readBuffer.entries()) {
             try {
               tag.data = await this.mb_ReadRegisters(tag.params);
               tag.isError = false;
@@ -88,9 +67,9 @@ export class MB_ConnectToDevice {
                 this._writeBufferConsistent[index].status = tag.status;
               }
             }
-          });
+          }
           //============ WRITE ASYNC ======================
-          this._writeBuffer.forEach(async (tag, index) => {
+          for (const [index, tag] of this._writeBuffer.entries()) {
             if (tag.execute) {
               try {
                 if (!this._readBuffer[index].isError) {
@@ -109,11 +88,11 @@ export class MB_ConnectToDevice {
                 } else tag.status = 'Unknown Error';
               }
             }
-          });
+          }
           //============ WRITE SYNC ======================
-          this._syncQueue.forEach((query) => {
+          for (const query of this._syncQueue) {
             if (!query.isDone && !query.isError) {
-              query.tags.forEach(async (index, i) => {
+              for (const [i, index] of query.tags.entries()) {
                 const dataToWrite: Pick<MB_Params, 'area' | 'len' | 'start' | 'data'> = { ...this._writeBuffer[index - 1].params, data: query.data[i] };
                 try {
                   await this.mb_WriteRegisters(dataToWrite);
@@ -125,9 +104,9 @@ export class MB_ConnectToDevice {
                     query.status = error.message;
                   } else query.status = 'Unknown Error during writing';
                 }
-              });
+              }
             }
-          });
+          }
           //==============================================
         } else {
           throw new InternalError(`Device offline`);
@@ -156,7 +135,7 @@ export class MB_ConnectToDevice {
         this._writeBufferConsistent[index].execute = false;
         return toWriteBufer;
       });
-    }, 1000);
+    }, 200);
   };
 
   public mb_ReadRegisters = async (params: Pick<MB_Params, 'area' | 'len' | 'start' | 'count'>): Promise<number[]> => {

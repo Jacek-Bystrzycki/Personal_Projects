@@ -10,11 +10,11 @@ import { waitUntil } from '../../../utils/waitUntil';
 
 export class MB_CreateConnections {
   private _instances: MB_DeviceInstance[];
-  constructor(private readonly deviceDefinitions: MB_ConnectionParamType[]) {
+  constructor(private readonly mbDefinitions: MB_ConnectionParamType[]) {
     this._instances = this.createConnections();
   }
   private createConnections = (): MB_DeviceInstance[] => {
-    const instances = this.deviceDefinitions.map((item) => {
+    const instances = this.mbDefinitions.map((item) => {
       return new MB_ConnectToDevice(...item);
     });
     return instances.map((instance, index) => {

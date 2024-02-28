@@ -5,15 +5,18 @@ import { CustomRouter } from './router';
 import { Universal_Controller } from './controller/universal';
 import { S7_Controller } from './controller/s7';
 import { MB_Controller } from './controller/mb';
+import { RTU_Controller } from './controller/rtu';
 import { ErrorHandler, notFound } from './error-handler';
 import { sendResponse } from './controller/sendResponse';
 
 export class CustomServer extends StandardServer {
   private s7_router?: CustomRouter;
   private mb_router?: CustomRouter;
+  private rtu_router?: CustomRouter;
   private universal_router?: CustomRouter;
   private s7_controller?: S7_Controller;
   private mb_controller?: MB_Controller;
+  private rtu_controller?: RTU_Controller;
   private universal_controller?: Universal_Controller;
   constructor(public port: number, public devices: ServerDevices) {
     super(port);
@@ -21,6 +24,7 @@ export class CustomServer extends StandardServer {
     this.configUniversalRoutes();
     this.configS7Routes();
     this.configMBRoutes();
+    this.configRTURoutes();
     this.errorHandling();
     this.startServer();
   }
@@ -65,6 +69,22 @@ export class CustomServer extends StandardServer {
       ]);
 
       this.app.use(mainPaths.MBTags, this.mb_router.router);
+    }
+  };
+  private configRTURoutes = () => {
+    if (this.devices.rtu_definitions) {
+      this.rtu_router = new CustomRouter();
+      this.rtu_controller = new RTU_Controller(this.devices.rtu_definitions);
+      this.rtu_router.addMiddleware('GET', '/read', [this.rtu_controller.verifyRTUParams, this.rtu_controller.read, sendResponse]);
+      this.rtu_router.addMiddleware('GET', '/read/:id', [this.rtu_controller.verifyRTUParams, this.rtu_controller.read, sendResponse]);
+      this.rtu_router.addMiddleware('PUT', '/write/:id', [this.rtu_controller.verifyRTUParams, this.rtu_controller.verifyPayload, this.rtu_controller.write]);
+      this.rtu_router.addMiddleware('PUT', '/writesync/:id', [
+        this.rtu_controller.verifyRTUParams,
+        this.rtu_controller.verifyPayload,
+        this.rtu_controller.writeSync,
+      ]);
+
+      this.app.use(mainPaths.RTUTags, this.rtu_router.router);
     }
   };
   private errorHandling = () => {

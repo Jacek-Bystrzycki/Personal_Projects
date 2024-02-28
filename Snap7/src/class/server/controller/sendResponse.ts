@@ -15,6 +15,9 @@ export const sendResponse = (req: Request, res: Response, next: NextFunction): v
     if (res.mbTags) {
       resp = [...resp, ...res.mbTags];
     }
+    if (res.rtuTags) {
+      resp = [...resp, ...res.rtuTags];
+    }
     res.status(StatusCodes.OK).json({ message: `${getDateAsString()}Success`, amount: resp.length, response: resp });
   } catch (error) {
     next(error);

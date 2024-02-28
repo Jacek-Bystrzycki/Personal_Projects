@@ -62,8 +62,8 @@ export class MB_Controller {
             ? this.instance.instances.find((id) => id.id === instanceId)?.instance.readBufferConsistent.find((tag) => tag.id === index)?.data
             : undefined,
         startAddForRead:
-          this.instance.instances.find((id) => id.id === instanceId)!.instance.writeBufferConsistent.find((tag) => tag.id === index)?.format === 'Bit'
-            ? this.instance.instances.find((id) => id.id === instanceId)?.instance.readBufferConsistent.find((tag) => tag.id === index)?.params.start
+          this.instance.instances.find((id) => id.id === instanceId)!.instance.writeBufferConsistent.find((tag) => tag.id === index)!.format === 'Bit'
+            ? this.instance.instances.find((id) => id.id === instanceId)?.instance.readBufferConsistent.find((tag) => tag.id === index)!.params.start
             : undefined,
       };
     });

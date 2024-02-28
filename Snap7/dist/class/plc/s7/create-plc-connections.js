@@ -16,10 +16,10 @@ const waitUntil_1 = require("../../../utils/waitUntil");
 const nanoid_1 = require("nanoid");
 const serachQuery_1 = require("../../../utils/plc/serachQuery");
 class S7_CreateConnections {
-    constructor(params) {
-        this.params = params;
+    constructor(s7Definitions) {
+        this.s7Definitions = s7Definitions;
         this.s7_createConnctions = () => {
-            const plcInstances = this.params.map((plc) => {
+            const plcInstances = this.s7Definitions.map((plc) => {
                 return new connect_to_plc_1.S7_ConnectToPlc(...plc);
             });
             return plcInstances.map((instance, index) => {

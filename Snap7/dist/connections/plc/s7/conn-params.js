@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.S7_Definition = exports.s7_triggetTime = void 0;
-exports.s7_triggetTime = 1000;
+exports.S7_Definition = void 0;
+// export const s7_triggerTime: number = 1000;
 //=======================================================
 class S7_Definition {
     constructor(ip, rack, slot, tags) {

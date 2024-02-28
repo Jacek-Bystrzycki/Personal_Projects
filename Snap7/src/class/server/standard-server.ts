@@ -19,6 +19,7 @@ declare global {
     interface Response {
       s7Tags: S7_AfterFormatRead[];
       mbTags: MB_AfterFormatRead[];
+      rtuTags: MB_AfterFormatRead[];
     }
   }
 }

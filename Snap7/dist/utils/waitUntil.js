@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.waitUntil = void 0;
-const conn_params_1 = require("../connections/plc/s7/conn-params");
 const waitUntil = (res, rej, errorMsg, checkInterval = 100) => __awaiter(void 0, void 0, void 0, function* () {
     const promise = new Promise((resolve, reject) => {
         let interval = setInterval(() => {
@@ -28,7 +27,7 @@ const waitUntil = (res, rej, errorMsg, checkInterval = 100) => __awaiter(void 0,
     const timeout = new Promise((_, reject) => {
         setTimeout(() => {
             reject('Timeout');
-        }, conn_params_1.s7_triggetTime * 5);
+        }, 5000);
     });
     return Promise.race([promise, timeout]);
 });

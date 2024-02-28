@@ -11,12 +11,12 @@ import type { S7_AfterFormatWrite } from '../../../types/plc/s7/request';
 
 export class S7_CreateConnections {
   private _instances: S7_PLCInstance[];
-  constructor(private params: S7_ConnectionParamType[]) {
+  constructor(private s7Definitions: S7_ConnectionParamType[]) {
     this._instances = this.s7_createConnctions();
   }
 
   private s7_createConnctions = (): S7_PLCInstance[] => {
-    const plcInstances: S7_ConnectToPlc[] = this.params.map((plc) => {
+    const plcInstances: S7_ConnectToPlc[] = this.s7Definitions.map((plc) => {
       return new S7_ConnectToPlc(...plc);
     });
     return plcInstances.map((instance, index) => {

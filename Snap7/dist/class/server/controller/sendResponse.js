@@ -12,6 +12,9 @@ const sendResponse = (req, res, next) => {
         if (res.mbTags) {
             resp = [...resp, ...res.mbTags];
         }
+        if (res.rtuTags) {
+            resp = [...resp, ...res.rtuTags];
+        }
         res.status(http_status_codes_1.StatusCodes.OK).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, amount: resp.length, response: resp });
     }
     catch (error) {

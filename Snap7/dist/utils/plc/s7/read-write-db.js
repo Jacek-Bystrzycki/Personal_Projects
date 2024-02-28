@@ -1,51 +1,37 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.s7_writeAreas = exports.s7_readAreas = void 0;
-const conn_params_1 = require("../../../connections/plc/s7/conn-params");
-const errors_1 = require("../../../types/server/errors");
-const get_object_prop_1 = require("../../get-object-prop");
-const s7_readAreas = (s7client, multiVar) => __awaiter(void 0, void 0, void 0, function* () {
-    const promise = new Promise((resolve, reject) => {
-        s7client.ReadMultiVars(multiVar, (err, data) => {
-            if (!err && data.every((result) => result.Result === 0))
-                resolve(data);
-            const errorDataDBValues = JSON.stringify((0, get_object_prop_1.getObjectValue)(multiVar, 'DBNumber'));
-            reject(new errors_1.InternalError(`Cannot read-write data from-to DBs:${errorDataDBValues}`));
-        });
-    });
-    const timeout = new Promise((_, reject) => {
-        setTimeout(() => {
-            s7client.Disconnect();
-            reject(new errors_1.InternalError(`Timeout during reading data from PLC`));
-        }, conn_params_1.s7_triggetTime / 1.5);
-    });
-    return Promise.race([promise, timeout]);
-});
-exports.s7_readAreas = s7_readAreas;
-const s7_writeAreas = (s7client, multiVar) => __awaiter(void 0, void 0, void 0, function* () {
-    const promise = new Promise((resolve, reject) => {
-        s7client.WriteMultiVars(multiVar, (err, data) => {
-            if (!err && data.every((result) => result.Result === 0))
-                resolve();
-            const errorDataDBValues = JSON.stringify((0, get_object_prop_1.getObjectValue)(multiVar, 'DBNumber'));
-            reject(new errors_1.InternalError(`Cannot write data to DBs:${errorDataDBValues}`));
-        });
-    });
-    const timeout = new Promise((_, reject) => {
-        setTimeout(() => {
-            s7client.Disconnect();
-            reject(new errors_1.InternalError(`Timeout during writing data from PLC`));
-        }, conn_params_1.s7_triggetTime / 1.5);
-    });
-    return Promise.race([promise, timeout]);
-});
-exports.s7_writeAreas = s7_writeAreas;
+// import snap7 = require('node-snap7');
+// import { s7_triggetTime } from '../../../connections/plc/s7/conn-params';
+// import { InternalError } from '../../../types/server/errors';
+// import { getObjectValue } from '../../get-object-prop';
+// export const s7_readAreas = async (s7client: snap7.S7Client, multiVar: snap7.MultiVarRead[]): Promise<snap7.MultiVarsReadResult[]> => {
+//   const promise = new Promise<snap7.MultiVarsReadResult[]>((resolve, reject) => {
+//     s7client.ReadMultiVars(multiVar, (err, data) => {
+//       if (!err && data.every((result) => result.Result === 0)) resolve(data);
+//       const errorDataDBValues = JSON.stringify(getObjectValue(multiVar, 'DBNumber'));
+//       reject(new InternalError(`Cannot read-write data from-to DBs:${errorDataDBValues}`));
+//     });
+//   });
+//   const timeout = new Promise<never>((_, reject) => {
+//     setTimeout(() => {
+//       s7client.Disconnect();
+//       reject(new InternalError(`Timeout during reading data from PLC`));
+//     }, s7_triggetTime / 1.5);
+//   });
+//   return Promise.race([promise, timeout]);
+// };
+// export const s7_writeAreas = async (s7client: snap7.S7Client, multiVar: snap7.MultiVarWrite[]): Promise<void> => {
+//   const promise = new Promise<void>((resolve, reject) => {
+//     s7client.WriteMultiVars(multiVar, (err, data) => {
+//       if (!err && data.every((result) => result.Result === 0)) resolve();
+//       const errorDataDBValues = JSON.stringify(getObjectValue(multiVar, 'DBNumber'));
+//       reject(new InternalError(`Cannot write data to DBs:${errorDataDBValues}`));
+//     });
+//   });
+//   const timeout = new Promise<never>((_, reject) => {
+//     setTimeout(() => {
+//       s7client.Disconnect();
+//       reject(new InternalError(`Timeout during writing data from PLC`));
+//     }, s7_triggetTime / 1.5);
+//   });
+//   return Promise.race([promise, timeout]);
+// };

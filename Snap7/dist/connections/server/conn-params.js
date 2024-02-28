@@ -10,5 +10,6 @@ exports.mainPaths = {
     AllTags: '/api/v1/tags/read',
     S7Tags: '/api/v1/tags/s7',
     MBTags: '/api/v1/tags/mb',
+    RTUTags: '/api/v1/tags/rtu',
 };
 exports.port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;

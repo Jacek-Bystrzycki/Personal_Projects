@@ -7,6 +7,7 @@ const router_1 = require("./router");
 const universal_1 = require("./controller/universal");
 const s7_1 = require("./controller/s7");
 const mb_1 = require("./controller/mb");
+const rtu_1 = require("./controller/rtu");
 const error_handler_1 = require("./error-handler");
 const sendResponse_1 = require("./controller/sendResponse");
 class CustomServer extends standard_server_1.StandardServer {
@@ -52,6 +53,17 @@ class CustomServer extends standard_server_1.StandardServer {
                 this.app.use(conn_params_1.mainPaths.MBTags, this.mb_router.router);
             }
         };
+        this.configRTURoutes = () => {
+            if (this.devices.rtu_definitions) {
+                this.rtu_router = new router_1.CustomRouter();
+                this.rtu_controller = new rtu_1.RTU_Controller(this.devices.rtu_definitions);
+                this.rtu_router.addMiddleware('GET', '/read', [this.rtu_controller.verifyPayload, this.rtu_controller.read, sendResponse_1.sendResponse]);
+                this.rtu_router.addMiddleware('GET', '/read/:id', [this.rtu_controller.verifyPayload, this.rtu_controller.read, sendResponse_1.sendResponse]);
+                this.rtu_router.addMiddleware('PUT', '/write/:id', [this.rtu_controller.verifyPayload, this.rtu_controller.write]);
+                this.rtu_router.addMiddleware('PUT', '/writesync/:id', [this.rtu_controller.verifyPayload, this.rtu_controller.writeSync]);
+                this.app.use(conn_params_1.mainPaths.RTUTags, this.rtu_router.router);
+            }
+        };
         this.errorHandling = () => {
             this.app.use(error_handler_1.notFound);
             this.app.use(error_handler_1.ErrorHandler.errorHandler);
@@ -60,6 +72,7 @@ class CustomServer extends standard_server_1.StandardServer {
         this.configUniversalRoutes();
         this.configS7Routes();
         this.configMBRoutes();
+        this.configRTURoutes();
         this.errorHandling();
         this.startServer();
     }

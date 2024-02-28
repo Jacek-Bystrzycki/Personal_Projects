@@ -2,7 +2,7 @@ import type { MB_Format, MB_TagType } from './format';
 
 type MB_Info = {
   deviceId: number;
-  type: 'mb';
+  type: 'mb' | 'rtu';
   holdingRegister: number;
   amount: number;
 };

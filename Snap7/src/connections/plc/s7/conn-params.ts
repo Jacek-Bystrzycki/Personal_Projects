@@ -1,7 +1,7 @@
 import { S7_ConnectionParamType } from '../../../types/plc/s7/conn-param';
 import type { S7_Tags } from '../../../types/plc/s7/format';
 
-export const s7_triggetTime: number = 1000;
+// export const s7_triggerTime: number = 1000;
 //=======================================================
 export class S7_Definition {
   private _plc: S7_ConnectionParamType;

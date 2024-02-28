@@ -11,14 +11,43 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.S7_DataPLC = void 0;
 const snap7 = require("node-snap7");
-const read_write_db_1 = require("../../../utils/plc/s7/read-write-db");
+const errors_1 = require("../../../types/server/errors");
+const get_object_prop_1 = require("../../../utils/get-object-prop");
 class S7_DataPLC {
     constructor() {
         this.s7_readFromPlc = (multiVar) => __awaiter(this, void 0, void 0, function* () {
-            return (0, read_write_db_1.s7_readAreas)(this.s7client, multiVar);
+            const promise = new Promise((resolve, reject) => {
+                this.s7client.ReadMultiVars(multiVar, (err, data) => {
+                    if (!err && data.every((result) => result.Result === 0))
+                        resolve(data);
+                    const errorDataDBValues = JSON.stringify((0, get_object_prop_1.getObjectValue)(multiVar, 'DBNumber'));
+                    reject(new errors_1.InternalError(`Cannot read-write data from-to DBs:${errorDataDBValues}`));
+                });
+            });
+            const timeout = new Promise((_, reject) => {
+                setTimeout(() => {
+                    this.s7client.Disconnect();
+                    reject(new errors_1.InternalError(`Timeout during reading data from PLC`));
+                }, 2000);
+            });
+            return Promise.race([promise, timeout]);
         });
         this.s7_writeToPlc = (multiVar) => __awaiter(this, void 0, void 0, function* () {
-            return (0, read_write_db_1.s7_writeAreas)(this.s7client, multiVar);
+            const promise = new Promise((resolve, reject) => {
+                this.s7client.WriteMultiVars(multiVar, (err, data) => {
+                    if (!err && data.every((result) => result.Result === 0))
+                        resolve();
+                    const errorDataDBValues = JSON.stringify((0, get_object_prop_1.getObjectValue)(multiVar, 'DBNumber'));
+                    reject(new errors_1.InternalError(`Cannot write data to DBs:${errorDataDBValues}`));
+                });
+            });
+            const timeout = new Promise((_, reject) => {
+                setTimeout(() => {
+                    this.s7client.Disconnect();
+                    reject(new errors_1.InternalError(`Timeout during writing data from PLC`));
+                }, 2000);
+            });
+            return Promise.race([promise, timeout]);
         });
         this.s7client = new snap7.S7Client();
     }

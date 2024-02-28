@@ -50,7 +50,7 @@ class MB_ConnectToDevice {
                 try {
                     if (this._isConnected) {
                         //============ READ ASYNC ======================
-                        this._readBuffer.forEach((tag, index) => __awaiter(this, void 0, void 0, function* () {
+                        for (const [index, tag] of this._readBuffer.entries()) {
                             try {
                                 tag.data = yield this.mb_ReadRegisters(tag.params);
                                 tag.isError = false;
@@ -68,9 +68,9 @@ class MB_ConnectToDevice {
                                     this._writeBufferConsistent[index].status = tag.status;
                                 }
                             }
-                        }));
+                        }
                         //============ WRITE ASYNC ======================
-                        this._writeBuffer.forEach((tag, index) => __awaiter(this, void 0, void 0, function* () {
+                        for (const [index, tag] of this._writeBuffer.entries()) {
                             if (tag.execute) {
                                 try {
                                     if (!this._readBuffer[index].isError) {
@@ -93,11 +93,11 @@ class MB_ConnectToDevice {
                                         tag.status = 'Unknown Error';
                                 }
                             }
-                        }));
+                        }
                         //============ WRITE SYNC ======================
-                        this._syncQueue.forEach((query) => {
+                        for (const query of this._syncQueue) {
                             if (!query.isDone && !query.isError) {
-                                query.tags.forEach((index, i) => __awaiter(this, void 0, void 0, function* () {
+                                for (const [i, index] of query.tags.entries()) {
                                     const dataToWrite = Object.assign(Object.assign({}, this._writeBuffer[index - 1].params), { data: query.data[i] });
                                     try {
                                         yield this.mb_WriteRegisters(dataToWrite);
@@ -112,9 +112,9 @@ class MB_ConnectToDevice {
                                         else
                                             query.status = 'Unknown Error during writing';
                                     }
-                                }));
+                                }
                             }
-                        });
+                        }
                         //==============================================
                     }
                     else {
@@ -146,7 +146,7 @@ class MB_ConnectToDevice {
                     this._writeBufferConsistent[index].execute = false;
                     return toWriteBufer;
                 });
-            }), 1000);
+            }), 200);
         };
         this.mb_ReadRegisters = (params) => __awaiter(this, void 0, void 0, function* () {
             const { start, count, len } = params;
@@ -213,22 +213,6 @@ class MB_ConnectToDevice {
         this.removeFromSyncQueue = (id) => {
             this._syncQueue = this._syncQueue.filter((query) => query.queryId !== id);
         };
-        // RTU
-        // SerialPort.list().then((ports) => ports.forEach((port) => console.log(port.path)));
-        // this._serialOptions = {
-        //   path: 'COM1',
-        //   baudRate: 9600,
-        //   parity: 'none',
-        //   dataBits: 8,
-        //   stopBits: 1,
-        // };
-        // this._socketSerial = new SerialPort(this._serialOptions);
-        // this._clientRtu = new Modbus.client.RTU(this._socketSerial, 1);
-        // this._socketSerial.on('error', console.error);
-        // this._socketSerial.on('open', () => {
-        //   this._clientRtu.readHoldingRegisters(0, 2);
-        // });
-        // TCP
         this._socket = new net_1.Socket();
         this._client = new Modbus.client.TCP(this._socket, this.uId);
         this._readBuffer = this.tagsDefs.map((tagDef) => {

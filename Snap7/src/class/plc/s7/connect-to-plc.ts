@@ -1,6 +1,5 @@
 import snap7 = require('node-snap7');
 import { S7_DataPLC } from './data-plc';
-import { s7_triggetTime } from '../../../connections/plc/s7/conn-params';
 import { InternalError } from '../../../types/server/errors';
 import { S7_ReadTag, S7_WriteTag } from '../../../types/plc/s7/tags';
 import { setIntervalAsync } from 'set-interval-async/fixed';
@@ -49,7 +48,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
       setTimeout(() => {
         this.s7client.Disconnect();
         reject(new InternalError(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`));
-      }, s7_triggetTime / 1.5);
+      }, 2000);
     });
     return Promise.race([promise, timeout]);
   };
@@ -59,7 +58,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
       try {
         await this.s7_connectPlc();
         //============================ READ ASYNC ===================
-        this._readBuffer.forEach(async (tag, index) => {
+        for (const [index, tag] of this._readBuffer.entries()) {
           try {
             const data: snap7.MultiVarsReadResult[] = await this.s7_readFromPlc([tag.params]);
             tag.data = data[0].Data;
@@ -76,7 +75,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
               this._writeBufferConsistent[index].status = tag.status;
             }
           }
-        });
+        }
       } catch (error) {
         this._readBuffer.forEach((tag, index) => {
           tag.isError = true;
@@ -92,7 +91,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
       }
       this._readBufferConsistent = structuredClone(this._readBuffer);
       //============================ WRITE ASYNC ===================
-      this._writeBuffer.forEach(async (tag, index) => {
+      for (const [index, tag] of this._writeBuffer.entries()) {
         if (tag.execute) {
           try {
             if (!this._readBuffer[index].isError) {
@@ -116,7 +115,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
             }
           }
         }
-      });
+      }
       this._writeBuffer = this._writeBuffer.map((data, index) => {
         const params: snap7.MultiVarWrite = { ...data.params, Data: this._writeBufferConsistent[index].params.Data };
         const toWriteBufer = { ...data, execute: this._writeBufferConsistent[index].execute ? true : false, params };
@@ -124,7 +123,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
         return toWriteBufer;
       });
       //============================ WRITE SYNC ===================
-      this._syncQueue.forEach(async (query) => {
+      for (const query of this._syncQueue) {
         if (!query.isDone && !query.isError) {
           const dataToWrite: snap7.MultiVarWrite[] = query.tags.map((index, i) => {
             return { ...this._writeBufferSync[index - 1].params, Data: query.data[i] };
@@ -140,8 +139,8 @@ export class S7_ConnectToPlc extends S7_DataPLC {
             } else query.status = 'Unknown Error during writing';
           }
         }
-      });
-    }, s7_triggetTime);
+      }
+    }, 200);
   };
 
   public addToSyncQueue = (data: S7_SyncQuery): void => {

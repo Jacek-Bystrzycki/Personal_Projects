@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.S7_ConnectToPlc = void 0;
 const data_plc_1 = require("./data-plc");
-const conn_params_1 = require("../../../connections/plc/s7/conn-params");
 const errors_1 = require("../../../types/server/errors");
 const fixed_1 = require("set-interval-async/fixed");
 class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
@@ -40,7 +39,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                 setTimeout(() => {
                     this.s7client.Disconnect();
                     reject(new errors_1.InternalError(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`));
-                }, conn_params_1.s7_triggetTime / 1.5);
+                }, 2000);
             });
             return Promise.race([promise, timeout]);
         });
@@ -49,7 +48,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                 try {
                     yield this.s7_connectPlc();
                     //============================ READ ASYNC ===================
-                    this._readBuffer.forEach((tag, index) => __awaiter(this, void 0, void 0, function* () {
+                    for (const [index, tag] of this._readBuffer.entries()) {
                         try {
                             const data = yield this.s7_readFromPlc([tag.params]);
                             tag.data = data[0].Data;
@@ -68,7 +67,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                                 this._writeBufferConsistent[index].status = tag.status;
                             }
                         }
-                    }));
+                    }
                 }
                 catch (error) {
                     this._readBuffer.forEach((tag, index) => {
@@ -86,7 +85,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                 }
                 this._readBufferConsistent = structuredClone(this._readBuffer);
                 //============================ WRITE ASYNC ===================
-                this._writeBuffer.forEach((tag, index) => __awaiter(this, void 0, void 0, function* () {
+                for (const [index, tag] of this._writeBuffer.entries()) {
                     if (tag.execute) {
                         try {
                             if (!this._readBuffer[index].isError) {
@@ -113,7 +112,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                             }
                         }
                     }
-                }));
+                }
                 this._writeBuffer = this._writeBuffer.map((data, index) => {
                     const params = Object.assign(Object.assign({}, data.params), { Data: this._writeBufferConsistent[index].params.Data });
                     const toWriteBufer = Object.assign(Object.assign({}, data), { execute: this._writeBufferConsistent[index].execute ? true : false, params });
@@ -121,7 +120,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                     return toWriteBufer;
                 });
                 //============================ WRITE SYNC ===================
-                this._syncQueue.forEach((query) => __awaiter(this, void 0, void 0, function* () {
+                for (const query of this._syncQueue) {
                     if (!query.isDone && !query.isError) {
                         const dataToWrite = query.tags.map((index, i) => {
                             return Object.assign(Object.assign({}, this._writeBufferSync[index - 1].params), { Data: query.data[i] });
@@ -140,8 +139,8 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                                 query.status = 'Unknown Error during writing';
                         }
                     }
-                }));
-            }), conn_params_1.s7_triggetTime);
+                }
+            }), 200);
         };
         this.addToSyncQueue = (data) => {
             this._syncQueue.push(data);
