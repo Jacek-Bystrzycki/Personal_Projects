@@ -123,7 +123,8 @@ class RTU_ConnectToDevice {
                             for (const [i, index] of query.tags.entries()) {
                                 const dataToWrite = Object.assign(Object.assign({}, this._writeBuffer.find((instance) => instance.uId === query.uId).tags[index - 1].params), { data: query.data[i] });
                                 try {
-                                    yield this.rtu_WriteRegisters(this._client[index], dataToWrite);
+                                    const clientIndex = this._writeBuffer.findIndex((instance) => instance.uId === query.uId);
+                                    yield this.rtu_WriteRegisters(this._client[clientIndex], dataToWrite);
                                     query.status = 'Query Done';
                                     query.isDone = true;
                                 }

@@ -85,6 +85,17 @@ class RTU_Controller {
             }
             return { idArr, numTags };
         };
+        this.verifyRTUParams = (req, res, next) => {
+            try {
+                const { idArr, numTags } = this.verifyParams(req);
+                req.id = idArr;
+                req.tags = numTags;
+                next();
+            }
+            catch (error) {
+                next(error);
+            }
+        };
         this.verifyPayload = (req, res, next) => {
             const { data } = req.body;
             try {
@@ -126,9 +137,6 @@ class RTU_Controller {
         };
         this.read = (req, res, next) => {
             try {
-                const { idArr, numTags } = this.verifyParams(req);
-                req.id = idArr;
-                req.tags = numTags;
                 const data = this.instance.rtu_readFromDevice(req.id, req.tags);
                 const resp = (0, mb_formatData_1.mb_formatReadData)(data);
                 res.rtuTags = resp;
@@ -143,7 +151,7 @@ class RTU_Controller {
             try {
                 const data = (0, mb_formatData_1.mb_formatWriteData)(req.id[0], writeTags);
                 this.instance.rtu_writeToDevice(data);
-                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data: req.data });
+                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, values: req.data });
             }
             catch (error) {
                 next(error);
@@ -154,7 +162,7 @@ class RTU_Controller {
             try {
                 const data = (0, mb_formatData_1.mb_formatWriteData)(req.id[0], writeTags);
                 const respQuery = yield this.instance.rtu_writeToDeviceSync(data);
-                const resp = Object.assign(Object.assign({}, respQuery), { data: req.data });
+                const resp = Object.assign(Object.assign({}, respQuery), { values: req.data });
                 res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, resp });
             }
             catch (error) {

@@ -75,7 +75,7 @@ export class MB_Controller {
     try {
       const data: MB_AfterFormatWrite = mb_formatWriteData(req.id[0], writeTags);
       this.instance.mb_writeToDevice(data);
-      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, data: req.data });
+      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, values: req.data });
     } catch (error) {
       next(error);
     }
@@ -87,7 +87,7 @@ export class MB_Controller {
     try {
       const data: MB_AfterFormatWrite = mb_formatWriteData(req.id[0], writeTags);
       const respQuery = await this.instance.mb_writeToDeviceSync(data);
-      const resp = { ...respQuery, data: req.data };
+      const resp = { ...respQuery, values: req.data };
       res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, resp });
     } catch (error) {
       next(error);

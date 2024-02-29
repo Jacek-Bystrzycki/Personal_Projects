@@ -57,7 +57,7 @@ export class RTU_CreateConnection {
   public rtu_writeToDeviceSync = async (dataToWrite: MB_AfterFormatWrite): Promise<Partial<RTU_SyncQuery>> => {
     const query: RTU_SyncQuery = {
       queryId: nanoid(),
-      uId: dataToWrite.instanceId - 1,
+      uId: dataToWrite.instanceId,
       tags: dataToWrite.writeTags.map((tag) => tag.tagId),
       data: dataToWrite.writeTags.map((tag) => tag.data),
       isDone: false,

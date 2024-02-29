@@ -57,10 +57,14 @@ class CustomServer extends standard_server_1.StandardServer {
             if (this.devices.rtu_definitions) {
                 this.rtu_router = new router_1.CustomRouter();
                 this.rtu_controller = new rtu_1.RTU_Controller(this.devices.rtu_definitions);
-                this.rtu_router.addMiddleware('GET', '/read', [this.rtu_controller.verifyPayload, this.rtu_controller.read, sendResponse_1.sendResponse]);
-                this.rtu_router.addMiddleware('GET', '/read/:id', [this.rtu_controller.verifyPayload, this.rtu_controller.read, sendResponse_1.sendResponse]);
-                this.rtu_router.addMiddleware('PUT', '/write/:id', [this.rtu_controller.verifyPayload, this.rtu_controller.write]);
-                this.rtu_router.addMiddleware('PUT', '/writesync/:id', [this.rtu_controller.verifyPayload, this.rtu_controller.writeSync]);
+                this.rtu_router.addMiddleware('GET', '/read', [this.rtu_controller.verifyRTUParams, this.rtu_controller.read, sendResponse_1.sendResponse]);
+                this.rtu_router.addMiddleware('GET', '/read/:id', [this.rtu_controller.verifyRTUParams, this.rtu_controller.read, sendResponse_1.sendResponse]);
+                this.rtu_router.addMiddleware('PUT', '/write/:id', [this.rtu_controller.verifyRTUParams, this.rtu_controller.verifyPayload, this.rtu_controller.write]);
+                this.rtu_router.addMiddleware('PUT', '/writesync/:id', [
+                    this.rtu_controller.verifyRTUParams,
+                    this.rtu_controller.verifyPayload,
+                    this.rtu_controller.writeSync,
+                ]);
                 this.app.use(conn_params_1.mainPaths.RTUTags, this.rtu_router.router);
             }
         };

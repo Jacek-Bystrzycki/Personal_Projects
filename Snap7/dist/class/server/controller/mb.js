@@ -83,7 +83,7 @@ class MB_Controller {
             try {
                 const data = (0, mb_formatData_1.mb_formatWriteData)(req.id[0], writeTags);
                 this.instance.mb_writeToDevice(data);
-                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data: req.data });
+                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, values: req.data });
             }
             catch (error) {
                 next(error);
@@ -94,7 +94,7 @@ class MB_Controller {
             try {
                 const data = (0, mb_formatData_1.mb_formatWriteData)(req.id[0], writeTags);
                 const respQuery = yield this.instance.mb_writeToDeviceSync(data);
-                const resp = Object.assign(Object.assign({}, respQuery), { data: req.data });
+                const resp = Object.assign(Object.assign({}, respQuery), { values: req.data });
                 res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, resp });
             }
             catch (error) {

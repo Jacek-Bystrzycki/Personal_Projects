@@ -76,7 +76,7 @@ class S7_Controller {
             try {
                 const data = (0, s7_formatData_1.s7_formatWriteData)(req.id[0], writeTags);
                 this.instance.s7_writeData(data);
-                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, data: req.data });
+                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, values: req.data });
             }
             catch (error) {
                 next(error);
@@ -87,7 +87,7 @@ class S7_Controller {
             try {
                 const data = (0, s7_formatData_1.s7_formatWriteData)(req.id[0], writeTags);
                 const respQuery = yield this.instance.s7_writeDataSync(data);
-                const resp = Object.assign(Object.assign({}, respQuery), { data: req.data });
+                const resp = Object.assign(Object.assign({}, respQuery), { values: req.data });
                 res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, resp });
             }
             catch (error) {

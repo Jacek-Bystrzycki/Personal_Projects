@@ -138,7 +138,8 @@ export class RTU_ConnectToDevice {
                 data: query.data[i],
               };
               try {
-                await this.rtu_WriteRegisters(this._client[index], dataToWrite);
+                const clientIndex: number = this._writeBuffer.findIndex((instance) => instance.uId === query.uId);
+                await this.rtu_WriteRegisters(this._client[clientIndex], dataToWrite);
                 query.status = 'Query Done';
                 query.isDone = true;
               } catch (error) {

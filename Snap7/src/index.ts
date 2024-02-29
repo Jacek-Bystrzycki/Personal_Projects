@@ -43,6 +43,12 @@ const main = async (): Promise<void> => {
 
   const server1 = new CustomServer(port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1, rtu_definitions: rtu_devices });
 
+  let counter: number = 0;
+  setInterval(() => {
+    counter++;
+    console.log(`CYCLE!!! - ${counter}`);
+  }, 2000);
+
   //=========
   // const rtu_2: RTU_Defintion = new RTU_Defintion('COM5', rtuDef);
   // const rtu_devices2 = new RTU_CreateConnection(rtu_1.device);

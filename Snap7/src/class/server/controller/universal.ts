@@ -37,21 +37,22 @@ export class Universal_Controller {
         const mb_tagsBefore: MB_BeforeFormatRead[] = this.devices.mb_definitions.mb_readFromDevice(mb_ids, mb_tags);
         const mb_tagAfter: MB_AfterFormatRead[] = mb_formatReadData(mb_tagsBefore);
         res.mbTags = mb_tagAfter;
-        //================== RTU ===================
-        if (this.devices.rtu_definitions) {
-          const rtu_ids: number[] = this.devices.rtu_definitions.instances.instance.readBuffer.map((instance) => {
-            return instance.uId;
-          });
-          const rtu_tags: number[][] = this.devices.rtu_definitions.instances.instance.readBuffer.map((instance) => {
-            return instance.tags.map((tag) => {
-              return tag.id;
-            });
-          });
-          const rtu_tagsBefore: MB_BeforeFormatRead[] = this.devices.rtu_definitions.rtu_readFromDevice(rtu_ids, rtu_tags);
-          const rtu_tagAfter: MB_AfterFormatRead[] = mb_formatReadData(rtu_tagsBefore);
-          res.rtuTags = rtu_tagAfter;
-        }
       }
+      //================== RTU ===================
+      if (this.devices.rtu_definitions) {
+        const rtu_ids: number[] = this.devices.rtu_definitions.instances.instance.readBuffer.map((instance) => {
+          return instance.uId;
+        });
+        const rtu_tags: number[][] = this.devices.rtu_definitions.instances.instance.readBuffer.map((instance) => {
+          return instance.tags.map((tag) => {
+            return tag.id;
+          });
+        });
+        const rtu_tagsBefore: MB_BeforeFormatRead[] = this.devices.rtu_definitions.rtu_readFromDevice(rtu_ids, rtu_tags);
+        const rtu_tagAfter: MB_AfterFormatRead[] = mb_formatReadData(rtu_tagsBefore);
+        res.rtuTags = rtu_tagAfter;
+      }
+
       next();
     } catch (error) {
       next(error);

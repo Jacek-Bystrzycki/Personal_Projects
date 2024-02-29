@@ -44,6 +44,12 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const rtu_1 = new conn_params_4.RTU_Defintion('COM3', rtuDef);
     const rtu_devices = new create_mb_connection_2.RTU_CreateConnection(rtu_1.device);
     const server1 = new custom_server_1.CustomServer(conn_params_1.port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1, rtu_definitions: rtu_devices });
+    // const server1 = new CustomServer(port, { mb_definitions: mb_devices_1, rtu_definitions: rtu_devices });
+    let counter = 0;
+    setInterval(() => {
+        counter++;
+        console.log(`CYCLE!!! - ${counter}`);
+    }, 2000);
     //=========
     // const rtu_2: RTU_Defintion = new RTU_Defintion('COM5', rtuDef);
     // const rtu_devices2 = new RTU_CreateConnection(rtu_1.device);

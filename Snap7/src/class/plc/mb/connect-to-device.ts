@@ -1,11 +1,12 @@
 import { Socket, SocketConnectOpts } from 'net';
 import Modbus = require('jsmodbus');
 import { InternalError } from '../../../types/server/errors';
-import { setIntervalAsync } from 'set-interval-async/fixed';
+import { setIntervalAsync } from 'set-interval-async/dynamic';
 import type { MB_TagDef } from '../../../types/plc/mb/format';
 import type { MB_ReadTag, MB_WriteTag } from '../../../types/plc/mb/tags';
 import type { MB_SyncQuery } from '../../../types/plc/mb/syncQuery';
 import type { MB_Params } from '../../../types/plc/mb/format';
+import { sleep } from '../../../utils/sleep';
 
 export class MB_ConnectToDevice {
   private _socket: Socket;
@@ -66,6 +67,8 @@ export class MB_ConnectToDevice {
                 tag.status = 'Unknown Error';
                 this._writeBufferConsistent[index].status = tag.status;
               }
+            } finally {
+              await sleep(10);
             }
           }
           //============ WRITE ASYNC ======================
@@ -86,6 +89,8 @@ export class MB_ConnectToDevice {
                 if (error instanceof InternalError) {
                   tag.status = error.message;
                 } else tag.status = 'Unknown Error';
+              } finally {
+                await sleep(10);
               }
             }
           }
@@ -103,6 +108,8 @@ export class MB_ConnectToDevice {
                   if (error instanceof InternalError) {
                     query.status = error.message;
                   } else query.status = 'Unknown Error during writing';
+                } finally {
+                  await sleep(10);
                 }
               }
             }
@@ -135,7 +142,7 @@ export class MB_ConnectToDevice {
         this._writeBufferConsistent[index].execute = false;
         return toWriteBufer;
       });
-    }, 200);
+    }, 1);
   };
 
   public mb_ReadRegisters = async (params: Pick<MB_Params, 'area' | 'len' | 'start' | 'count'>): Promise<number[]> => {

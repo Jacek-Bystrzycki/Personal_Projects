@@ -146,7 +146,7 @@ class MB_ConnectToDevice {
                     this._writeBufferConsistent[index].execute = false;
                     return toWriteBufer;
                 });
-            }), 200);
+            }), 300);
         };
         this.mb_ReadRegisters = (params) => __awaiter(this, void 0, void 0, function* () {
             const { start, count, len } = params;

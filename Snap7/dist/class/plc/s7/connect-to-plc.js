@@ -140,7 +140,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                         }
                     }
                 }
-            }), 200);
+            }), 300);
         };
         this.addToSyncQueue = (data) => {
             this._syncQueue.push(data);

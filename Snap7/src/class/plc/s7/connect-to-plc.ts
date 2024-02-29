@@ -2,9 +2,10 @@ import snap7 = require('node-snap7');
 import { S7_DataPLC } from './data-plc';
 import { InternalError } from '../../../types/server/errors';
 import { S7_ReadTag, S7_WriteTag } from '../../../types/plc/s7/tags';
-import { setIntervalAsync } from 'set-interval-async/fixed';
+import { setIntervalAsync } from 'set-interval-async/dynamic';
 import type { S7_ReadTagDef, S7_WriteTagDef } from '../../../types/plc/s7/format';
 import { S7_SyncQuery } from '../../../types/plc/s7/syncQuery';
+import { sleep } from '../../../utils/sleep';
 
 export class S7_ConnectToPlc extends S7_DataPLC {
   private _readBuffer: S7_ReadTag[];
@@ -34,8 +35,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
   }
 
   private s7_connectPlc = async (): Promise<void> => {
-    const promise = new Promise<void>((resolve, reject) => {
-      this.s7client.Disconnect();
+    return new Promise<void>((resolve, reject) => {
       this.s7client.ConnectTo(this.ip, this.rack, this.slot, (err) => {
         if (!err) {
           resolve();
@@ -44,13 +44,6 @@ export class S7_ConnectToPlc extends S7_DataPLC {
         }
       });
     });
-    const timeout = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        this.s7client.Disconnect();
-        reject(new InternalError(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`));
-      }, 2000);
-    });
-    return Promise.race([promise, timeout]);
   };
 
   private loop = (): void => {
@@ -74,6 +67,8 @@ export class S7_ConnectToPlc extends S7_DataPLC {
               tag.status = 'Unknown Error';
               this._writeBufferConsistent[index].status = tag.status;
             }
+          } finally {
+            await sleep(10);
           }
         }
       } catch (error) {
@@ -113,6 +108,8 @@ export class S7_ConnectToPlc extends S7_DataPLC {
               tag.status = 'Unknown error';
               this._writeBufferConsistent[index].status = tag.status;
             }
+          } finally {
+            await sleep(10);
           }
         }
       }
@@ -137,10 +134,12 @@ export class S7_ConnectToPlc extends S7_DataPLC {
             if (error instanceof InternalError) {
               query.status = error.message;
             } else query.status = 'Unknown Error during writing';
+          } finally {
+            await sleep(10);
           }
         }
       }
-    }, 200);
+    }, 1);
   };
 
   public addToSyncQueue = (data: S7_SyncQuery): void => {
