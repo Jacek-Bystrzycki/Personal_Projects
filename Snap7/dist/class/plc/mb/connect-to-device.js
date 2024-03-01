@@ -24,7 +24,9 @@ exports.MB_ConnectToDevice = void 0;
 const net_1 = require("net");
 const Modbus = require("jsmodbus");
 const errors_1 = require("../../../types/server/errors");
-const fixed_1 = require("set-interval-async/fixed");
+const dynamic_1 = require("set-interval-async/dynamic");
+const sleep_1 = require("../../../utils/sleep");
+const sleepInterval = 10;
 class MB_ConnectToDevice {
     constructor(options, uId, tagsDefs) {
         this.options = options;
@@ -46,7 +48,7 @@ class MB_ConnectToDevice {
                 this._isConnected = true;
                 this._connectCmd = false;
             });
-            (0, fixed_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
+            (0, dynamic_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
                 try {
                     if (this._isConnected) {
                         //============ READ ASYNC ======================
@@ -67,6 +69,9 @@ class MB_ConnectToDevice {
                                     tag.status = 'Unknown Error';
                                     this._writeBufferConsistent[index].status = tag.status;
                                 }
+                            }
+                            finally {
+                                yield (0, sleep_1.sleep)(sleepInterval);
                             }
                         }
                         //============ WRITE ASYNC ======================
@@ -92,6 +97,9 @@ class MB_ConnectToDevice {
                                     else
                                         tag.status = 'Unknown Error';
                                 }
+                                finally {
+                                    yield (0, sleep_1.sleep)(sleepInterval);
+                                }
                             }
                         }
                         //============ WRITE SYNC ======================
@@ -111,6 +119,9 @@ class MB_ConnectToDevice {
                                         }
                                         else
                                             query.status = 'Unknown Error during writing';
+                                    }
+                                    finally {
+                                        yield (0, sleep_1.sleep)(sleepInterval);
                                     }
                                 }
                             }
@@ -146,7 +157,7 @@ class MB_ConnectToDevice {
                     this._writeBufferConsistent[index].execute = false;
                     return toWriteBufer;
                 });
-            }), 300);
+            }), 1);
         };
         this.mb_ReadRegisters = (params) => __awaiter(this, void 0, void 0, function* () {
             const { start, count, len } = params;

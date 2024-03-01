@@ -8,6 +8,8 @@ import type { MB_SyncQuery } from '../../../types/plc/mb/syncQuery';
 import type { MB_Params } from '../../../types/plc/mb/format';
 import { sleep } from '../../../utils/sleep';
 
+const sleepInterval: number = 10;
+
 export class MB_ConnectToDevice {
   private _socket: Socket;
   private _client: Modbus.ModbusTCPClient;
@@ -68,7 +70,7 @@ export class MB_ConnectToDevice {
                 this._writeBufferConsistent[index].status = tag.status;
               }
             } finally {
-              await sleep(10);
+              await sleep(sleepInterval);
             }
           }
           //============ WRITE ASYNC ======================
@@ -90,7 +92,7 @@ export class MB_ConnectToDevice {
                   tag.status = error.message;
                 } else tag.status = 'Unknown Error';
               } finally {
-                await sleep(10);
+                await sleep(sleepInterval);
               }
             }
           }
@@ -109,7 +111,7 @@ export class MB_ConnectToDevice {
                     query.status = error.message;
                   } else query.status = 'Unknown Error during writing';
                 } finally {
-                  await sleep(10);
+                  await sleep(sleepInterval);
                 }
               }
             }

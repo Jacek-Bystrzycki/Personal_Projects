@@ -16,7 +16,7 @@ const get_object_prop_1 = require("../../../utils/get-object-prop");
 class S7_DataPLC {
     constructor() {
         this.s7_readFromPlc = (multiVar) => __awaiter(this, void 0, void 0, function* () {
-            const promise = new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 this.s7client.ReadMultiVars(multiVar, (err, data) => {
                     if (!err && data.every((result) => result.Result === 0))
                         resolve(data);
@@ -24,16 +24,9 @@ class S7_DataPLC {
                     reject(new errors_1.InternalError(`Cannot read-write data from-to DBs:${errorDataDBValues}`));
                 });
             });
-            const timeout = new Promise((_, reject) => {
-                setTimeout(() => {
-                    this.s7client.Disconnect();
-                    reject(new errors_1.InternalError(`Timeout during reading data from PLC`));
-                }, 2000);
-            });
-            return Promise.race([promise, timeout]);
         });
         this.s7_writeToPlc = (multiVar) => __awaiter(this, void 0, void 0, function* () {
-            const promise = new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 this.s7client.WriteMultiVars(multiVar, (err, data) => {
                     if (!err && data.every((result) => result.Result === 0))
                         resolve();
@@ -41,13 +34,6 @@ class S7_DataPLC {
                     reject(new errors_1.InternalError(`Cannot write data to DBs:${errorDataDBValues}`));
                 });
             });
-            const timeout = new Promise((_, reject) => {
-                setTimeout(() => {
-                    this.s7client.Disconnect();
-                    reject(new errors_1.InternalError(`Timeout during writing data from PLC`));
-                }, 2000);
-            });
-            return Promise.race([promise, timeout]);
         });
         this.s7client = new snap7.S7Client();
     }

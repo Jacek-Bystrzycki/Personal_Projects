@@ -16,7 +16,7 @@ class CustomServer extends standard_server_1.StandardServer {
         this.port = port;
         this.devices = devices;
         this.configUniversalRoutes = () => {
-            if (this.devices.s7_definitions || this.devices.mb_definitions) {
+            if (this.devices.s7_definitions || this.devices.mb_definitions || this.devices.rtu_definitions) {
                 this.universal_router = new router_1.CustomRouter();
                 this.universal_controller = new universal_1.Universal_Controller(this.devices);
                 this.universal_router.addMiddleware('GET', '/', [this.universal_controller.readAll, sendResponse_1.sendResponse]);

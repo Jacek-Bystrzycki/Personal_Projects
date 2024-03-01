@@ -7,6 +7,8 @@ import type { S7_ReadTagDef, S7_WriteTagDef } from '../../../types/plc/s7/format
 import { S7_SyncQuery } from '../../../types/plc/s7/syncQuery';
 import { sleep } from '../../../utils/sleep';
 
+const sleepInterval: number = 10;
+
 export class S7_ConnectToPlc extends S7_DataPLC {
   private _readBuffer: S7_ReadTag[];
   private _writeBuffer: S7_WriteTag[];
@@ -68,7 +70,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
               this._writeBufferConsistent[index].status = tag.status;
             }
           } finally {
-            await sleep(10);
+            await sleep(sleepInterval);
           }
         }
       } catch (error) {
@@ -109,7 +111,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
               this._writeBufferConsistent[index].status = tag.status;
             }
           } finally {
-            await sleep(10);
+            await sleep(sleepInterval);
           }
         }
       }
@@ -135,7 +137,7 @@ export class S7_ConnectToPlc extends S7_DataPLC {
               query.status = error.message;
             } else query.status = 'Unknown Error during writing';
           } finally {
-            await sleep(10);
+            await sleep(sleepInterval);
           }
         }
       }

@@ -30,7 +30,7 @@ export class CustomServer extends StandardServer {
   }
 
   private configUniversalRoutes = () => {
-    if (this.devices.s7_definitions || this.devices.mb_definitions) {
+    if (this.devices.s7_definitions || this.devices.mb_definitions || this.devices.rtu_definitions) {
       this.universal_router = new CustomRouter();
       this.universal_controller = new Universal_Controller(this.devices);
       this.universal_router.addMiddleware('GET', '/', [this.universal_controller.readAll, sendResponse]);

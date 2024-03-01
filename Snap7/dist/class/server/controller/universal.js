@@ -35,20 +35,20 @@ class Universal_Controller {
                     const mb_tagsBefore = this.devices.mb_definitions.mb_readFromDevice(mb_ids, mb_tags);
                     const mb_tagAfter = (0, mb_formatData_1.mb_formatReadData)(mb_tagsBefore);
                     res.mbTags = mb_tagAfter;
-                    //================== RTU ===================
-                    if (this.devices.rtu_definitions) {
-                        const rtu_ids = this.devices.rtu_definitions.instances.instance.readBuffer.map((instance) => {
-                            return instance.uId;
+                }
+                //================== RTU ===================
+                if (this.devices.rtu_definitions) {
+                    const rtu_ids = this.devices.rtu_definitions.instances.instance.readBuffer.map((instance) => {
+                        return instance.uId;
+                    });
+                    const rtu_tags = this.devices.rtu_definitions.instances.instance.readBuffer.map((instance) => {
+                        return instance.tags.map((tag) => {
+                            return tag.id;
                         });
-                        const rtu_tags = this.devices.rtu_definitions.instances.instance.readBuffer.map((instance) => {
-                            return instance.tags.map((tag) => {
-                                return tag.id;
-                            });
-                        });
-                        const rtu_tagsBefore = this.devices.rtu_definitions.rtu_readFromDevice(rtu_ids, rtu_tags);
-                        const rtu_tagAfter = (0, mb_formatData_1.mb_formatReadData)(rtu_tagsBefore);
-                        res.rtuTags = rtu_tagAfter;
-                    }
+                    });
+                    const rtu_tagsBefore = this.devices.rtu_definitions.rtu_readFromDevice(rtu_ids, rtu_tags);
+                    const rtu_tagAfter = (0, mb_formatData_1.mb_formatReadData)(rtu_tagsBefore);
+                    res.rtuTags = rtu_tagAfter;
                 }
                 next();
             }

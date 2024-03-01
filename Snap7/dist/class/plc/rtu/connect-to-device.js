@@ -26,6 +26,7 @@ const Modbus = require("jsmodbus");
 const errors_1 = require("../../../types/server/errors");
 const dynamic_1 = require("set-interval-async/dynamic");
 const sleep_1 = require("../../../utils/sleep");
+const sleepInterval = 200;
 class RTU_ConnectToDevice {
     constructor(portName, uId, tagsDefs) {
         this.portName = portName;
@@ -82,7 +83,7 @@ class RTU_ConnectToDevice {
                                     }
                                 }
                                 finally {
-                                    yield (0, sleep_1.sleep)(80);
+                                    yield (0, sleep_1.sleep)(sleepInterval);
                                 }
                             }
                         }
@@ -112,7 +113,7 @@ class RTU_ConnectToDevice {
                                         this._writeBuffer[i].tags[j].status = 'Unknown Error';
                                 }
                                 finally {
-                                    yield (0, sleep_1.sleep)(80);
+                                    yield (0, sleep_1.sleep)(sleepInterval);
                                 }
                             }
                         }
@@ -137,7 +138,7 @@ class RTU_ConnectToDevice {
                                         query.status = 'Unknown Error during writing';
                                 }
                                 finally {
-                                    yield (0, sleep_1.sleep)(80);
+                                    yield (0, sleep_1.sleep)(sleepInterval);
                                 }
                             }
                         }

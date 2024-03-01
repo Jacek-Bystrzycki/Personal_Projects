@@ -9,6 +9,8 @@ import { sleep } from '../../../utils/sleep';
 import type { RTU_ReadBuffer, RTU_WriteBuffer } from '../../../types/plc/rtu/buffers';
 import { RTU_SyncQuery } from '../../../types/plc/rtu/syncQuery';
 
+const sleepInterval: number = 200;
+
 export class RTU_ConnectToDevice {
   private _options: SerialPortOpenOptions<AutoDetectTypes>;
   private _client: Modbus.ModbusRTUClient[] = [];
@@ -99,7 +101,7 @@ export class RTU_ConnectToDevice {
                   }
                 }
               } finally {
-                await sleep(80);
+                await sleep(sleepInterval);
               }
             }
           }
@@ -124,7 +126,7 @@ export class RTU_ConnectToDevice {
                   this._writeBuffer[i].tags[j].status = error.message;
                 } else this._writeBuffer[i].tags[j].status = 'Unknown Error';
               } finally {
-                await sleep(80);
+                await sleep(sleepInterval);
               }
             }
           }
@@ -148,7 +150,7 @@ export class RTU_ConnectToDevice {
                   query.status = error.message;
                 } else query.status = 'Unknown Error during writing';
               } finally {
-                await sleep(80);
+                await sleep(sleepInterval);
               }
             }
           }

@@ -20,17 +20,20 @@ const mb_createTags_1 = require("./tags/mb_createTags");
 const conn_params_3 = require("./connections/plc/mb/conn-params");
 const conn_params_4 = require("./connections/plc/rtu/conn-params");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
-    //=== ================ Server 1 ==================
+    //==================== Server 1 ==================
+    //Prepare S7
     let s7Tags = yield (0, s7_createTags_1.createS7Tags)('s7-tags-s1-p1.xlsx');
     const plc1 = new conn_params_2.S7_Definition('10.0.0.10', 0, 1, s7Tags);
     s7Tags = yield (0, s7_createTags_1.createS7Tags)('s7-tags-s1-p2.xlsx');
     const plc2 = new conn_params_2.S7_Definition('10.0.0.15', 0, 1, s7Tags);
     const s7_plc_1 = new create_plc_connections_1.S7_CreateConnections([plc1.plc, plc2.plc]);
+    //Prepare MB
     let mbTags = yield (0, mb_createTags_1.createMBTags)('mb-tags-s1-d1.xlsx');
     const device_1 = new conn_params_3.MB_Defintion({ host: '10.0.0.10', port: 502 }, 1, mbTags);
     let mbTags2 = yield (0, mb_createTags_1.createMBTags)('mb-tags-s1-d2.xlsx');
     const device_2 = new conn_params_3.MB_Defintion({ host: '10.0.0.15', port: 502 }, 2, mbTags);
     const mb_devices_1 = new create_mb_connection_1.MB_CreateConnections([device_1.device, device_2.device]);
+    //Prepare RTU
     const rtuDef = [
         {
             uId: 1,
@@ -42,29 +45,12 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         },
     ];
     const rtu_1 = new conn_params_4.RTU_Defintion('COM3', rtuDef);
-    const rtu_devices = new create_mb_connection_2.RTU_CreateConnection(rtu_1.device);
-    const server1 = new custom_server_1.CustomServer(conn_params_1.port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1, rtu_definitions: rtu_devices });
-    // const server1 = new CustomServer(port, { mb_definitions: mb_devices_1, rtu_definitions: rtu_devices });
-    let counter = 0;
-    setInterval(() => {
-        counter++;
-        console.log(`CYCLE!!! - ${counter}`);
-    }, 2000);
-    //=========
-    // const rtu_2: RTU_Defintion = new RTU_Defintion('COM5', rtuDef);
-    // const rtu_devices2 = new RTU_CreateConnection(rtu_1.device);
-    // const server2 = new CustomServer(port + 1, { rtu_definitions: rtu_devices2 });
-    //=== ================ Server 2 ==================
-    // tagFile = 's7-tags-s2-p2.xlsx';
-    // readTags = await createS7ReadTags(tagFile);
-    // writeTags = await createS7WriteTags(tagFile);
-    // const plc3: S7_Definition = new S7_Definition('10.0.0.12', 0, 1, readTags, writeTags);
-    // tagFile = 's7-tags-s2-p2.xlsx';
-    // readTags = await createS7ReadTags(tagFile);
-    // writeTags = await createS7WriteTags(tagFile);
-    // const plc4: S7_Definition = new S7_Definition('10.0.0.17', 0, 1, readTags, writeTags);
-    // const mb_devices_2 = new MB_CreateConnections(mb_deviceDefinitions_2);
-    // const s7_plc_2 = new S7_CreateConnections({ plcDefinitions: [plc3.plc, plc4.plc] });
-    // const server2 = new CustomServer(port + 1, { s7_definitions: s7_plc_2, mb_definitions: mb_devices_2 });
+    const rtu_devices_1 = new create_mb_connection_2.RTU_CreateConnection(rtu_1.device);
+    const server1 = new custom_server_1.CustomServer(conn_params_1.port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1, rtu_definitions: rtu_devices_1 });
+    //==================== Server 2 ==================
+    //Prepare RTU
+    const rtu_2 = new conn_params_4.RTU_Defintion('COM5', rtuDef);
+    const rtu_devices_2 = new create_mb_connection_2.RTU_CreateConnection(rtu_2.device);
+    const server2 = new custom_server_1.CustomServer(conn_params_1.port + 1, { rtu_definitions: rtu_devices_2 });
 });
 main();

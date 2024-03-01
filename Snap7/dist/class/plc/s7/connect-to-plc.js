@@ -12,7 +12,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.S7_ConnectToPlc = void 0;
 const data_plc_1 = require("./data-plc");
 const errors_1 = require("../../../types/server/errors");
-const fixed_1 = require("set-interval-async/fixed");
+const dynamic_1 = require("set-interval-async/dynamic");
+const sleep_1 = require("../../../utils/sleep");
+const sleepInterval = 10;
 class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
     constructor(ip, rack, slot, readData, writeData) {
         super();
@@ -24,8 +26,7 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
         this._readBufferConsistent = [];
         this._syncQueue = [];
         this.s7_connectPlc = () => __awaiter(this, void 0, void 0, function* () {
-            const promise = new Promise((resolve, reject) => {
-                this.s7client.Disconnect();
+            return new Promise((resolve, reject) => {
                 this.s7client.ConnectTo(this.ip, this.rack, this.slot, (err) => {
                     if (!err) {
                         resolve();
@@ -35,16 +36,9 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                     }
                 });
             });
-            const timeout = new Promise((_, reject) => {
-                setTimeout(() => {
-                    this.s7client.Disconnect();
-                    reject(new errors_1.InternalError(`Lost connection to PLC at ${this.ip}, rack: ${this.rack}, slot: ${this.slot}.`));
-                }, 2000);
-            });
-            return Promise.race([promise, timeout]);
         });
         this.loop = () => {
-            (0, fixed_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
+            (0, dynamic_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
                 try {
                     yield this.s7_connectPlc();
                     //============================ READ ASYNC ===================
@@ -66,6 +60,9 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                                 tag.status = 'Unknown Error';
                                 this._writeBufferConsistent[index].status = tag.status;
                             }
+                        }
+                        finally {
+                            yield (0, sleep_1.sleep)(sleepInterval);
                         }
                     }
                 }
@@ -111,6 +108,9 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                                 this._writeBufferConsistent[index].status = tag.status;
                             }
                         }
+                        finally {
+                            yield (0, sleep_1.sleep)(sleepInterval);
+                        }
                     }
                 }
                 this._writeBuffer = this._writeBuffer.map((data, index) => {
@@ -138,9 +138,12 @@ class S7_ConnectToPlc extends data_plc_1.S7_DataPLC {
                             else
                                 query.status = 'Unknown Error during writing';
                         }
+                        finally {
+                            yield (0, sleep_1.sleep)(sleepInterval);
+                        }
                     }
                 }
-            }), 300);
+            }), 1);
         };
         this.addToSyncQueue = (data) => {
             this._syncQueue.push(data);
