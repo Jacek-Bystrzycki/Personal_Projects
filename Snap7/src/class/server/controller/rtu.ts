@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import type { RTU_CreateConnection } from '../../plc/rtu/create-mb-connection';
+import type { RTU_CreateConnection } from '../../plc/rtu/create-rtu-connection';
 import { BadRequestError } from '../../../types/server/errors';
 import type { MB_BeforeFormatRead, MB_AfterFormatRead, MB_BeforeFormatWrite, MB_AfterFormatWrite } from '../../../types/plc/mb/request';
 import { mb_formatReadData, mb_formatWriteData } from './mb-formatData';

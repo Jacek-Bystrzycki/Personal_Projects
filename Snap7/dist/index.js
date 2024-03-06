@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const create_plc_connections_1 = require("./class/plc/s7/create-plc-connections");
 const create_mb_connection_1 = require("./class/plc/mb/create-mb-connection");
-const create_mb_connection_2 = require("./class/plc/rtu/create-mb-connection");
+const create_rtu_connection_1 = require("./class/plc/rtu/create-rtu-connection");
 const custom_server_1 = require("./class/server/custom-server");
 const conn_params_1 = require("./connections/server/conn-params");
 const s7_createTags_1 = require("./tags/s7_createTags");
@@ -19,6 +19,9 @@ const conn_params_2 = require("./connections/plc/s7/conn-params");
 const mb_createTags_1 = require("./tags/mb_createTags");
 const conn_params_3 = require("./connections/plc/mb/conn-params");
 const conn_params_4 = require("./connections/plc/rtu/conn-params");
+const conn_params_5 = require("./connections/plc/ua/conn-params");
+const ua_createTags_1 = require("./tags/ua_createTags");
+const create_ua_connection_1 = require("./class/plc/ua/create-ua-connection");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     //==================== Server 1 ==================
     //Prepare S7
@@ -45,12 +48,16 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         },
     ];
     const rtu_1 = new conn_params_4.RTU_Defintion('COM3', rtuDef);
-    const rtu_devices_1 = new create_mb_connection_2.RTU_CreateConnection(rtu_1.device);
+    const rtu_devices_1 = new create_rtu_connection_1.RTU_CreateConnection(rtu_1.device);
     const server1 = new custom_server_1.CustomServer(conn_params_1.port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1, rtu_definitions: rtu_devices_1 });
+    //Prepare OPC UA
+    const uaTags = yield (0, ua_createTags_1.createUATags)('ua-tags-s1-d1.xlsx');
+    const ua1 = new conn_params_5.UA_Definition('opc.tcp://10.0.0.10:4840', uaTags);
+    const ua_devices_1 = new create_ua_connection_1.UA_CreateConnections([ua1.device]);
     //==================== Server 2 ==================
     //Prepare RTU
     const rtu_2 = new conn_params_4.RTU_Defintion('COM5', rtuDef);
-    const rtu_devices_2 = new create_mb_connection_2.RTU_CreateConnection(rtu_2.device);
+    const rtu_devices_2 = new create_rtu_connection_1.RTU_CreateConnection(rtu_2.device);
     const server2 = new custom_server_1.CustomServer(conn_params_1.port + 1, { rtu_definitions: rtu_devices_2 });
 });
 main();

@@ -1,9 +1,9 @@
 import { S7_CreateConnections } from './class/plc/s7/create-plc-connections';
 import { MB_CreateConnections } from './class/plc/mb/create-mb-connection';
-import { RTU_CreateConnection } from './class/plc/rtu/create-mb-connection';
+import { RTU_CreateConnection } from './class/plc/rtu/create-rtu-connection';
 import { CustomServer } from './class/server/custom-server';
 import { port } from './connections/server/conn-params';
-import type { S7_Tags } from './types/plc/s7/format';
+import { S7_Tags } from './types/plc/s7/format';
 import { createS7Tags } from './tags/s7_createTags';
 import { S7_Definition } from './connections/plc/s7/conn-params';
 import { createMBTags } from './tags/mb_createTags';
@@ -11,6 +11,10 @@ import { MB_Defintion } from './connections/plc/mb/conn-params';
 import { MB_TagDef } from './types/plc/mb/format';
 import { RTU_Defintion } from './connections/plc/rtu/conn-params';
 import { RTUConDef } from './types/plc/rtu/definitions';
+import { UA_Definition } from './connections/plc/ua/conn-params';
+import { createUATags } from './tags/ua_createTags';
+import { UA_TagDef } from './types/plc/ua/format';
+import { UA_CreateConnections } from './class/plc/ua/create-ua-connection';
 
 const main = async (): Promise<void> => {
   //==================== Server 1 ==================
@@ -43,6 +47,11 @@ const main = async (): Promise<void> => {
   const rtu_devices_1 = new RTU_CreateConnection(rtu_1.device);
 
   const server1 = new CustomServer(port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1, rtu_definitions: rtu_devices_1 });
+
+  //Prepare OPC UA
+  const uaTags: UA_TagDef[] = await createUATags('ua-tags-s1-d1.xlsx');
+  const ua1: UA_Definition = new UA_Definition('opc.tcp://10.0.0.10:4840', uaTags);
+  const ua_devices_1 = new UA_CreateConnections([ua1.device]);
 
   //==================== Server 2 ==================
   //Prepare RTU

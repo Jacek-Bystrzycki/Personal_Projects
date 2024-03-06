@@ -1,7 +1,7 @@
 import { Express } from 'express';
 import { S7_CreateConnections } from '../../class/plc/s7/create-plc-connections';
 import { MB_CreateConnections } from '../../class/plc/mb/create-mb-connection';
-import { RTU_CreateConnection } from '../../class/plc/rtu/create-mb-connection';
+import { RTU_CreateConnection } from '../../class/plc/rtu/create-rtu-connection';
 
 export type ServerDevices = {
   s7_definitions?: S7_CreateConnections;
