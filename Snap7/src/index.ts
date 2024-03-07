@@ -46,13 +46,17 @@ const main = async (): Promise<void> => {
   const rtu_1: RTU_Defintion = new RTU_Defintion('COM3', rtuDef);
   const rtu_devices_1 = new RTU_CreateConnection(rtu_1.device);
 
-  const server1 = new CustomServer(port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1, rtu_definitions: rtu_devices_1 });
-
   //Prepare OPC UA
   const uaTags: UA_TagDef[] = await createUATags('ua-tags-s1-d1.xlsx');
   const ua1: UA_Definition = new UA_Definition('opc.tcp://10.0.0.10:4840', uaTags);
   const ua_devices_1 = new UA_CreateConnections([ua1.device]);
 
+  const server1 = new CustomServer(port, {
+    s7_definitions: s7_plc_1,
+    mb_definitions: mb_devices_1,
+    rtu_definitions: rtu_devices_1,
+    ua_definitions: ua_devices_1,
+  });
   //==================== Server 2 ==================
   //Prepare RTU
   const rtu_2: RTU_Defintion = new RTU_Defintion('COM5', rtuDef);

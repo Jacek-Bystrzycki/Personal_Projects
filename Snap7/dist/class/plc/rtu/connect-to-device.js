@@ -126,8 +126,10 @@ class RTU_ConnectToDevice {
                                 try {
                                     const clientIndex = this._writeBuffer.findIndex((instance) => instance.uId === query.uId);
                                     yield this.rtu_WriteRegisters(this._client[clientIndex], dataToWrite);
-                                    query.status = 'Query Done';
-                                    query.isDone = true;
+                                    if (i === query.tags.length - 1) {
+                                        query.status = 'Query Done';
+                                        query.isDone = true;
+                                    }
                                 }
                                 catch (error) {
                                     query.isError = true;

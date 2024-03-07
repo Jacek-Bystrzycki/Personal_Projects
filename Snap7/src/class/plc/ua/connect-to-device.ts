@@ -15,6 +15,8 @@ import { uaLimitValue } from '../../../utils/plc/ua/limitValue';
 import type { UA_ReadTag, UA_WriteTag } from '../../../types/plc/ua/tags';
 import type { UA_TagDef, UA_TagType } from '../../../types/plc/ua/format';
 import { BadRequestError } from '../../../types/server/errors';
+import { UA_SyncQuery } from '../../../types/plc/ua/syncQuery';
+import { InternalError } from '../../../types/server/errors';
 
 export class UA_ConnectToDevice {
   private _client: OPCUAClient;
@@ -22,6 +24,7 @@ export class UA_ConnectToDevice {
   private _connStrategy: ConnectionStrategyOptions;
   private _readBuffer: UA_ReadTag[];
   private _writeBuffer: UA_WriteTag[];
+  private _syncQueue: UA_SyncQuery[] = [];
   constructor(private readonly endpointUrl: string, private readonly tagsDefs: UA_TagDef[]) {
     this._connStrategy = {
       initialDelay: 100,
@@ -40,8 +43,8 @@ export class UA_ConnectToDevice {
       return {
         id: tagDef.id,
         nodeId: NodeId.resolveNodeId(tagDef.nodeId),
-        data: null,
-        dataType: this.getDataType(tagDef.dataType),
+        data: [],
+        dataType: UA_ConnectToDevice.getDataType(tagDef.dataType),
         isError: true,
         status: 'Bad. Init Conn.',
       };
@@ -51,8 +54,8 @@ export class UA_ConnectToDevice {
         id: tagDef.id,
         execute: false,
         nodeId: NodeId.resolveNodeId(tagDef.nodeId),
-        dataType: this.getDataType(tagDef.dataType),
-        data: null,
+        dataType: UA_ConnectToDevice.getDataType(tagDef.dataType),
+        data: [],
         isError: true,
         status: 'Bad. Init Conn.',
       };
@@ -69,11 +72,11 @@ export class UA_ConnectToDevice {
         for (const tag of this._readBuffer) {
           try {
             const { data, isError, status } = await this.readTag(session, tag);
-            tag.data = data;
+            tag.data = [data];
             tag.isError = isError;
             tag.status = status;
           } catch (error) {
-            tag.data = null;
+            tag.data = [];
             tag.isError = true;
             if (error instanceof BadRequestError) {
               tag.status = error.message;
@@ -89,10 +92,31 @@ export class UA_ConnectToDevice {
             tag.status = status;
           }
         }
+        //====WRTIE SYNC=====
+        for (const query of this._syncQueue) {
+          if (!query.isDone && !query.isError) {
+            for (const [i, index] of query.tags.entries()) {
+              const dataToWrite: UA_WriteTag = { ...this._writeBuffer[index - 1], data: query.data[i] };
+              try {
+                await this.writeTag(session, dataToWrite, this._readBuffer[index - 1]);
+                if (i === query.tags.length - 1) {
+                  query.status = 'Query Done';
+                  query.isDone = true;
+                }
+              } catch (error) {
+                query.isError = true;
+                if (error instanceof InternalError) {
+                  query.status = error.message;
+                } else query.status = 'Unknown Error during writing';
+              }
+            }
+          }
+        }
+        //===================
         await session.close();
       } catch (error) {
         this._readBuffer.forEach((tag) => {
-          tag.data = null;
+          tag.data = [];
           tag.isError = true;
           tag.status = 'BadCommunicationError';
         });
@@ -142,7 +166,7 @@ export class UA_ConnectToDevice {
           value: {
             value: {
               dataType: writeTag.dataType,
-              value: uaLimitValue(writeTag.data, writeTag.dataType),
+              value: uaLimitValue(writeTag.data[0], writeTag.dataType),
             },
           },
         });
@@ -158,7 +182,7 @@ export class UA_ConnectToDevice {
     } else throw new BadRequestError(`Bad_TypeMismatch WriteTag: ${readTag.nodeId}`);
   };
 
-  private getDataType = (type: UA_TagType): DataType => {
+  static getDataType = (type: UA_TagType): DataType => {
     switch (type) {
       case 'Boolean':
         return DataType.Boolean;
@@ -182,6 +206,15 @@ export class UA_ConnectToDevice {
         throw new Error('Wrong Data type');
     }
   };
+
+  public addToSyncQueue = (data: UA_SyncQuery): void => {
+    this._syncQueue.push(data);
+  };
+
+  public removeFromSyncQueue = (id: string): void => {
+    this._syncQueue = this._syncQueue.filter((query) => query.queryId !== id);
+  };
+
   public get readBuffer(): UA_ReadTag[] {
     return this._readBuffer;
   }
@@ -192,5 +225,9 @@ export class UA_ConnectToDevice {
 
   public set writeBuffer(data: UA_WriteTag[]) {
     this._writeBuffer = data;
+  }
+
+  public get syncQueue(): UA_SyncQuery[] {
+    return this._syncQueue;
   }
 }

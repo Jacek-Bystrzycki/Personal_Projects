@@ -2,6 +2,7 @@ import { BadRequestError } from '../../../types/server/errors';
 import { Request } from 'express';
 import { S7_CreateConnections } from '../../plc/s7/create-plc-connections';
 import { MB_CreateConnections } from '../../plc/mb/create-mb-connection';
+import { UA_CreateConnections } from '../../plc/ua/create-ua-connection';
 
 export const verifyParams = (req: Request, instance: S7_CreateConnections | MB_CreateConnections): { idArr: number[]; numTags: number[][] } => {
   const { id } = req.params;

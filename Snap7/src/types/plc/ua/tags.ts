@@ -4,7 +4,7 @@ export type UA_ReadTag = {
   id: number;
   nodeId: NodeId;
   dataType: DataType;
-  data: number | boolean | null;
+  data: (number | boolean)[];
   isError: boolean;
   status: string;
 };
@@ -14,7 +14,7 @@ export type UA_WriteTag = {
   execute: boolean;
   nodeId: NodeId;
   dataType: DataType;
-  data: number | null;
+  data: number[];
   isError: boolean;
   status: string;
 };

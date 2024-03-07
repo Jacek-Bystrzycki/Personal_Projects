@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uaLimitValue = void 0;
+exports.uaTransformReadValue = exports.uaLimitValue = void 0;
 const node_opcua_client_1 = require("node-opcua-client");
 const errors_1 = require("../../../types/server/errors");
 const uaLimitValue = (value, type) => {
@@ -58,3 +58,9 @@ const uaLimitValue = (value, type) => {
     }
 };
 exports.uaLimitValue = uaLimitValue;
+const uaTransformReadValue = (value) => {
+    if (typeof value !== 'boolean')
+        return value;
+    return value ? 1 : 0;
+};
+exports.uaTransformReadValue = uaTransformReadValue;

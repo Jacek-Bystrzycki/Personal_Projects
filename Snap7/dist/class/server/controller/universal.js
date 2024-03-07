@@ -50,6 +50,19 @@ class Universal_Controller {
                     const rtu_tagAfter = (0, mb_formatData_1.mb_formatReadData)(rtu_tagsBefore);
                     res.rtuTags = rtu_tagAfter;
                 }
+                //================== OPC UA ===================
+                if (this.devices.ua_definitions) {
+                    const ua_ids = this.devices.ua_definitions.instances.map((instance) => {
+                        return instance.id;
+                    });
+                    const ua_tags = this.devices.ua_definitions.instances.map((instance) => {
+                        return instance.instance.readBuffer.map((tag) => {
+                            return tag.id;
+                        });
+                    });
+                    const ua_afterTags = this.devices.ua_definitions.ua_readFromServer(ua_ids, ua_tags);
+                    res.uaTags = ua_afterTags;
+                }
                 next();
             }
             catch (error) {

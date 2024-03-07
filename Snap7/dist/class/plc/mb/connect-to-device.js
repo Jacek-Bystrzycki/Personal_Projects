@@ -109,8 +109,10 @@ class MB_ConnectToDevice {
                                     const dataToWrite = Object.assign(Object.assign({}, this._writeBuffer[index - 1].params), { data: query.data[i] });
                                     try {
                                         yield this.mb_WriteRegisters(dataToWrite);
-                                        query.status = 'Query Done';
-                                        query.isDone = true;
+                                        if (i === query.tags.length - 1) {
+                                            query.status = 'Query Done';
+                                            query.isDone = true;
+                                        }
                                     }
                                     catch (error) {
                                         query.isError = true;

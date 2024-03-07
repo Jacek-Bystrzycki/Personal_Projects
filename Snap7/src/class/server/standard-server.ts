@@ -7,6 +7,7 @@ import morgan = require('morgan');
 import { IncomingMessage } from 'http';
 import type { S7_AfterFormatRead } from '../../types/plc/s7/request';
 import type { MB_AfterFormatRead } from '../../types/plc/mb/request';
+import { UA_ReadFormat } from '../../types/plc/ua/request';
 
 declare global {
   namespace Express {
@@ -20,6 +21,7 @@ declare global {
       s7Tags: S7_AfterFormatRead[];
       mbTags: MB_AfterFormatRead[];
       rtuTags: MB_AfterFormatRead[];
+      uaTags: UA_ReadFormat[];
     }
   }
 }

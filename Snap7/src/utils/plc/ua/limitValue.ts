@@ -37,3 +37,9 @@ export const uaLimitValue = (value: number, type: DataType): number | boolean =>
       throw new BadRequestError('Unsupported data type');
   }
 };
+
+export const uaTransformReadValue = (value: number | boolean): number[] => {
+  if (typeof value === 'number') return [value];
+  if (typeof value === 'boolean') return value ? [1] : [0];
+  return [];
+};

@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-type RequestType = 'AllTags' | 'S7Tags' | 'MBTags' | 'RTUTags';
-type RequestPath = '/api/v1/tags/read' | '/api/v1/tags/s7' | '/api/v1/tags/mb' | '/api/v1/tags/rtu';
+type RequestType = 'AllTags' | 'S7Tags' | 'MBTags' | 'RTUTags' | 'OPCUA';
+type RequestPath = '/api/v1/tags/read' | '/api/v1/tags/s7' | '/api/v1/tags/mb' | '/api/v1/tags/rtu' | '/api/v1/tags/ua';
 
 type RoutesTypes = Record<RequestType, RequestPath>;
 export const mainPaths: RoutesTypes = {
@@ -10,6 +10,7 @@ export const mainPaths: RoutesTypes = {
   S7Tags: '/api/v1/tags/s7',
   MBTags: '/api/v1/tags/mb',
   RTUTags: '/api/v1/tags/rtu',
+  OPCUA: '/api/v1/tags/ua',
 };
 
 export type PathType = '/' | '/read' | '/read/:id' | '/write/:id' | '/writesync/:id';

@@ -14,10 +14,12 @@ const node_opcua_client_1 = require("node-opcua-client");
 const fixed_1 = require("set-interval-async/fixed");
 const limitValue_1 = require("../../../utils/plc/ua/limitValue");
 const errors_1 = require("../../../types/server/errors");
+const errors_2 = require("../../../types/server/errors");
 class UA_ConnectToDevice {
     constructor(endpointUrl, tagsDefs) {
         this.endpointUrl = endpointUrl;
         this.tagsDefs = tagsDefs;
+        this._syncQueue = [];
         this.loop = () => {
             (0, fixed_1.setIntervalAsync)(() => __awaiter(this, void 0, void 0, function* () {
                 try {
@@ -50,6 +52,30 @@ class UA_ConnectToDevice {
                             tag.status = status;
                         }
                     }
+                    //====WRTIE SYNC=====
+                    for (const query of this._syncQueue) {
+                        if (!query.isDone && !query.isError) {
+                            for (const [i, index] of query.tags.entries()) {
+                                const dataToWrite = Object.assign(Object.assign({}, this._writeBuffer[index - 1]), { data: query.data[i] });
+                                try {
+                                    yield this.writeTag(session, dataToWrite, this._readBuffer[index - 1]);
+                                    if (i === query.tags.length - 1) {
+                                        query.status = 'Query Done';
+                                        query.isDone = true;
+                                    }
+                                }
+                                catch (error) {
+                                    query.isError = true;
+                                    if (error instanceof errors_2.InternalError) {
+                                        query.status = error.message;
+                                    }
+                                    else
+                                        query.status = 'Unknown Error during writing';
+                                }
+                            }
+                        }
+                    }
+                    //===================
                     yield session.close();
                 }
                 catch (error) {
@@ -124,29 +150,11 @@ class UA_ConnectToDevice {
             else
                 throw new errors_1.BadRequestError(`Bad_TypeMismatch WriteTag: ${readTag.nodeId}`);
         });
-        this.getDataType = (type) => {
-            switch (type) {
-                case 'Boolean':
-                    return node_opcua_client_1.DataType.Boolean;
-                case 'SByte':
-                    return node_opcua_client_1.DataType.SByte;
-                case 'Byte':
-                    return node_opcua_client_1.DataType.Byte;
-                case 'Int16':
-                    return node_opcua_client_1.DataType.Int16;
-                case 'UInt16':
-                    return node_opcua_client_1.DataType.UInt16;
-                case 'Int32':
-                    return node_opcua_client_1.DataType.Int32;
-                case 'UInt32':
-                    return node_opcua_client_1.DataType.UInt32;
-                case 'Float':
-                    return node_opcua_client_1.DataType.Float;
-                case 'Double':
-                    return node_opcua_client_1.DataType.Double;
-                default:
-                    throw new Error('Wrong Data type');
-            }
+        this.addToSyncQueue = (data) => {
+            this._syncQueue.push(data);
+        };
+        this.removeFromSyncQueue = (id) => {
+            this._syncQueue = this._syncQueue.filter((query) => query.queryId !== id);
         };
         this._connStrategy = {
             initialDelay: 100,
@@ -166,7 +174,7 @@ class UA_ConnectToDevice {
                 id: tagDef.id,
                 nodeId: node_opcua_client_1.NodeId.resolveNodeId(tagDef.nodeId),
                 data: null,
-                dataType: this.getDataType(tagDef.dataType),
+                dataType: UA_ConnectToDevice.getDataType(tagDef.dataType),
                 isError: true,
                 status: 'Bad. Init Conn.',
             };
@@ -176,7 +184,7 @@ class UA_ConnectToDevice {
                 id: tagDef.id,
                 execute: false,
                 nodeId: node_opcua_client_1.NodeId.resolveNodeId(tagDef.nodeId),
-                dataType: this.getDataType(tagDef.dataType),
+                dataType: UA_ConnectToDevice.getDataType(tagDef.dataType),
                 data: null,
                 isError: true,
                 status: 'Bad. Init Conn.',
@@ -193,5 +201,32 @@ class UA_ConnectToDevice {
     set writeBuffer(data) {
         this._writeBuffer = data;
     }
+    get syncQueue() {
+        return this._syncQueue;
+    }
 }
 exports.UA_ConnectToDevice = UA_ConnectToDevice;
+UA_ConnectToDevice.getDataType = (type) => {
+    switch (type) {
+        case 'Boolean':
+            return node_opcua_client_1.DataType.Boolean;
+        case 'SByte':
+            return node_opcua_client_1.DataType.SByte;
+        case 'Byte':
+            return node_opcua_client_1.DataType.Byte;
+        case 'Int16':
+            return node_opcua_client_1.DataType.Int16;
+        case 'UInt16':
+            return node_opcua_client_1.DataType.UInt16;
+        case 'Int32':
+            return node_opcua_client_1.DataType.Int32;
+        case 'UInt32':
+            return node_opcua_client_1.DataType.UInt32;
+        case 'Float':
+            return node_opcua_client_1.DataType.Float;
+        case 'Double':
+            return node_opcua_client_1.DataType.Double;
+        default:
+            throw new Error('Wrong Data type');
+    }
+};

@@ -4,6 +4,7 @@ import type { S7_BeforeFormatRead, S7_AfterFormatRead } from '../../../types/plc
 import { s7_formatReadData } from './s7-formatData';
 import type { MB_BeforeFormatRead, MB_AfterFormatRead } from '../../../types/plc/mb/request';
 import { mb_formatReadData } from './mb-formatData';
+import type { UA_ReadFormat } from '../../../types/plc/ua/request';
 
 export class Universal_Controller {
   constructor(private readonly devices: ServerDevices) {}
@@ -51,6 +52,19 @@ export class Universal_Controller {
         const rtu_tagsBefore: MB_BeforeFormatRead[] = this.devices.rtu_definitions.rtu_readFromDevice(rtu_ids, rtu_tags);
         const rtu_tagAfter: MB_AfterFormatRead[] = mb_formatReadData(rtu_tagsBefore);
         res.rtuTags = rtu_tagAfter;
+      }
+      //================== OPC UA ===================
+      if (this.devices.ua_definitions) {
+        const ua_ids: number[] = this.devices.ua_definitions.instances.map((instance) => {
+          return instance.id;
+        });
+        const ua_tags: number[][] = this.devices.ua_definitions.instances.map((instance) => {
+          return instance.instance.readBuffer.map((tag) => {
+            return tag.id;
+          });
+        });
+        const ua_afterTags: UA_ReadFormat[] = this.devices.ua_definitions.ua_readFromServer(ua_ids, ua_tags);
+        res.uaTags = ua_afterTags;
       }
 
       next();
