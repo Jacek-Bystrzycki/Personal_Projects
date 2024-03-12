@@ -29,12 +29,12 @@ class UA_ConnectToDevice {
                     for (const tag of this._readBuffer) {
                         try {
                             const { data, isError, status } = yield this.readTag(session, tag);
-                            tag.data = data;
+                            tag.data = [data];
                             tag.isError = isError;
                             tag.status = status;
                         }
                         catch (error) {
-                            tag.data = null;
+                            tag.data = [];
                             tag.isError = true;
                             if (error instanceof errors_1.BadRequestError) {
                                 tag.status = error.message;
@@ -80,7 +80,7 @@ class UA_ConnectToDevice {
                 }
                 catch (error) {
                     this._readBuffer.forEach((tag) => {
-                        tag.data = null;
+                        tag.data = [];
                         tag.isError = true;
                         tag.status = 'BadCommunicationError';
                     });
@@ -130,7 +130,7 @@ class UA_ConnectToDevice {
                         value: {
                             value: {
                                 dataType: writeTag.dataType,
-                                value: (0, limitValue_1.uaLimitValue)(writeTag.data, writeTag.dataType),
+                                value: (0, limitValue_1.uaLimitValue)(writeTag.data[0], writeTag.dataType),
                             },
                         },
                     });
@@ -173,7 +173,7 @@ class UA_ConnectToDevice {
             return {
                 id: tagDef.id,
                 nodeId: node_opcua_client_1.NodeId.resolveNodeId(tagDef.nodeId),
-                data: null,
+                data: [],
                 dataType: UA_ConnectToDevice.getDataType(tagDef.dataType),
                 isError: true,
                 status: 'Bad. Init Conn.',
@@ -185,7 +185,7 @@ class UA_ConnectToDevice {
                 execute: false,
                 nodeId: node_opcua_client_1.NodeId.resolveNodeId(tagDef.nodeId),
                 dataType: UA_ConnectToDevice.getDataType(tagDef.dataType),
-                data: null,
+                data: [],
                 isError: true,
                 status: 'Bad. Init Conn.',
             };

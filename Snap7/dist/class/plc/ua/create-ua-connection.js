@@ -36,10 +36,11 @@ class UA_CreateConnections {
                     const data = {
                         deviceId: singleId,
                         id: currentTag.id,
+                        type: 'ua',
                         isError: currentTag.isError,
                         status: currentTag.status,
                         dataType: UA_CreateConnections.setDataType(currentTag.dataType),
-                        value: (0, limitValue_1.uaTransformReadValue)(currentTag.data),
+                        value: (0, limitValue_1.uaTransformReadValue)(currentTag.data[0]),
                     };
                     resp.push(data);
                 });

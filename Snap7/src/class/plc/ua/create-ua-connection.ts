@@ -34,6 +34,7 @@ export class UA_CreateConnections {
         const data: UA_ReadFormat = {
           deviceId: singleId,
           id: currentTag.id,
+          type: 'ua',
           isError: currentTag.isError,
           status: currentTag.status,
           dataType: UA_CreateConnections.setDataType(currentTag.dataType),

@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes';
 import { getDateAsString } from '../../../utils/get-date-as-string';
 import { BadRequestError } from '../../../types/server/errors';
 import type { UA_CreateConnections } from '../../plc/ua/create-ua-connection';
-import { verifyParams } from './verifyQueryParams';
 import { UA_WriteFormat, UA_DataResponseWrite } from '../../../types/plc/ua/request';
 
 export class UA_Controller {
@@ -22,8 +21,16 @@ export class UA_Controller {
 
   public verifyUAPayload = (req: Request, res: Response, next: NextFunction): void => {
     const { data } = req.body;
-    req.data = data;
-    next();
+    try {
+      if (!(Array.isArray(data) && data.every((item) => Array.isArray(item) && item.length === 1 && item.every((index) => typeof index === 'number'))))
+        throw new BadRequestError('Wrong data payload');
+      if (req.tags.length !== 1 || req.id.length !== 1) throw new BadRequestError('Cannot write to multiple devices in one request');
+      if (req.tags[0].length !== data.length) throw new BadRequestError(`Wrong amount of data payload`);
+      req.data = data;
+      next();
+    } catch (error) {
+      next(error);
+    }
   };
 
   public read = (req: Request, res: Response, next: NextFunction): void => {
@@ -37,11 +44,24 @@ export class UA_Controller {
 
   public write = (req: Request, res: Response, next: NextFunction): void => {
     const writeTags: UA_WriteFormat = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
-    this.instance.ua_writeToServer(writeTags);
-    res.status(StatusCodes.CREATED).send('OK');
+    try {
+      this.instance.ua_writeToServer(writeTags);
+      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, values: req.data });
+    } catch (error) {
+      next(error);
+    }
   };
 
-  public writeSync = async (req: Request, res: Response, next: NextFunction): Promise<void> => {};
+  public writeSync = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const writeTags: UA_WriteFormat = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
+    try {
+      const respQuery = await this.instance.ua_writToServerSync(writeTags);
+      const resp = { ...respQuery, values: req.data };
+      res.status(StatusCodes.CREATED).json({ message: `${getDateAsString()}Success`, resp });
+    } catch (error) {
+      next(error);
+    }
+  };
 
   private verifyParams = (req: Request): { idArr: number[]; numTags: number[][] } => {
     const { id } = req.params;

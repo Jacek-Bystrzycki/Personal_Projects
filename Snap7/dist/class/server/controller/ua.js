@@ -10,6 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UA_Controller = void 0;
+const http_status_codes_1 = require("http-status-codes");
+const get_date_as_string_1 = require("../../../utils/get-date-as-string");
 const errors_1 = require("../../../types/server/errors");
 class UA_Controller {
     constructor(instance) {
@@ -25,7 +27,22 @@ class UA_Controller {
                 next(error);
             }
         };
-        this.verifyUAPayload = (req, res, next) => { };
+        this.verifyUAPayload = (req, res, next) => {
+            const { data } = req.body;
+            try {
+                if (!(Array.isArray(data) && data.every((item) => Array.isArray(item) && item.length === 1 && item.every((index) => typeof index === 'number'))))
+                    throw new errors_1.BadRequestError('Wrong data payload');
+                if (req.tags.length !== 1 || req.id.length !== 1)
+                    throw new errors_1.BadRequestError('Cannot write to multiple devices in one request');
+                if (req.tags[0].length !== data.length)
+                    throw new errors_1.BadRequestError(`Wrong amount of data payload`);
+                req.data = data;
+                next();
+            }
+            catch (error) {
+                next(error);
+            }
+        };
         this.read = (req, res, next) => {
             try {
                 res.uaTags = this.instance.ua_readFromServer(req.id, req.tags);
@@ -35,8 +52,27 @@ class UA_Controller {
                 next(error);
             }
         };
-        this.write = (req, res, next) => { };
-        this.writeSync = (req, res, next) => __awaiter(this, void 0, void 0, function* () { });
+        this.write = (req, res, next) => {
+            const writeTags = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
+            try {
+                this.instance.ua_writeToServer(writeTags);
+                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, values: req.data });
+            }
+            catch (error) {
+                next(error);
+            }
+        };
+        this.writeSync = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const writeTags = this.prepareWriteTags(req.tags[0], req.id[0], req.data);
+            try {
+                const respQuery = yield this.instance.ua_writToServerSync(writeTags);
+                const resp = Object.assign(Object.assign({}, respQuery), { values: req.data });
+                res.status(http_status_codes_1.StatusCodes.CREATED).json({ message: `${(0, get_date_as_string_1.getDateAsString)()}Success`, resp });
+            }
+            catch (error) {
+                next(error);
+            }
+        });
         this.verifyParams = (req) => {
             const { id } = req.params;
             const { tags } = req.query;
@@ -51,7 +87,7 @@ class UA_Controller {
                 if (!Array.isArray(idArr) || !idArr.every((id) => !isNaN(id)))
                     throw new errors_1.BadRequestError("'Ids' needs to be an array of numbers");
                 idArr.forEach((id) => {
-                    if (this.instance.instances[id - 1])
+                    if (!this.instance.instances[id - 1])
                         throw new errors_1.BadRequestError(`Instance ${id} not exists`);
                 });
             }
@@ -102,6 +138,15 @@ class UA_Controller {
                 throw new errors_1.BadRequestError(`Not all tags ${JSON.stringify(wrongTags)} exist in params definitions`);
             }
             return { idArr, numTags };
+        };
+        this.prepareWriteTags = (tags, instanceId, data) => {
+            const writeTags = tags.map((index, i) => {
+                return {
+                    data: data[i],
+                    tagId: this.instance.instances.find((id) => id.id === instanceId).instance.writeBuffer.find((tag) => tag.id === index).id,
+                };
+            });
+            return { instanceId, writeTags };
         };
     }
 }

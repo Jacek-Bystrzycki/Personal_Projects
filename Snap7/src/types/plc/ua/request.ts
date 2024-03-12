@@ -3,6 +3,7 @@ import { UA_TagType } from './format';
 export type UA_ReadFormat = {
   deviceId: number;
   id: number;
+  type: 'ua';
   isError: boolean;
   status: string;
   dataType: UA_TagType;

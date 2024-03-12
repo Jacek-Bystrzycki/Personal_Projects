@@ -49,11 +49,16 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     ];
     const rtu_1 = new conn_params_4.RTU_Defintion('COM3', rtuDef);
     const rtu_devices_1 = new create_rtu_connection_1.RTU_CreateConnection(rtu_1.device);
-    const server1 = new custom_server_1.CustomServer(conn_params_1.port, { s7_definitions: s7_plc_1, mb_definitions: mb_devices_1, rtu_definitions: rtu_devices_1 });
     //Prepare OPC UA
     const uaTags = yield (0, ua_createTags_1.createUATags)('ua-tags-s1-d1.xlsx');
     const ua1 = new conn_params_5.UA_Definition('opc.tcp://10.0.0.10:4840', uaTags);
     const ua_devices_1 = new create_ua_connection_1.UA_CreateConnections([ua1.device]);
+    const server1 = new custom_server_1.CustomServer(conn_params_1.port, {
+        s7_definitions: s7_plc_1,
+        mb_definitions: mb_devices_1,
+        rtu_definitions: rtu_devices_1,
+        ua_definitions: ua_devices_1,
+    });
     //==================== Server 2 ==================
     //Prepare RTU
     const rtu_2 = new conn_params_4.RTU_Defintion('COM5', rtuDef);

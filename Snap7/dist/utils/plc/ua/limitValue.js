@@ -59,8 +59,10 @@ const uaLimitValue = (value, type) => {
 };
 exports.uaLimitValue = uaLimitValue;
 const uaTransformReadValue = (value) => {
-    if (typeof value !== 'boolean')
-        return value;
-    return value ? 1 : 0;
+    if (typeof value === 'number')
+        return [value];
+    if (typeof value === 'boolean')
+        return value ? [1] : [0];
+    return [];
 };
 exports.uaTransformReadValue = uaTransformReadValue;
